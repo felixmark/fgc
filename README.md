@@ -16,3 +16,5 @@ All of the rings have exactly distance d to every previous and next ring.
 Every ring has aan amount of 1 bit per 30° / # of ring with a minimum of 4 degrees per bit.
 I.e. that means the first ring can store up to 12 bits, the second one 24 and so forth.
 
+![Alt text](./fgc.svg)
+<img src="./fgc.svg">
