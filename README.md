@@ -1,5 +1,5 @@
 # Fancy Galaxy Code (FGC)
-Fancy Galaxy Code (FGC) strifes to serve as the new and prettier QR Code straight from the future.
+Fancy Galaxy Code (FGC) strifes to serve as the new and prettier QR Code straight from the future.  
 Contributions are highly appreciated!
 
 ## Specification
