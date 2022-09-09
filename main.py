@@ -18,6 +18,8 @@ class FGCCreator():
     """FGC Creator is used to create a Fancy Galaxy Code (FGC).
     """
 
+    VERSION_BITS = 4
+
     def __init__(self, color="#1060a0", correction_type=CorrectionType.TWO_BITS):
         self.color = color
         self.version = 1
@@ -90,7 +92,7 @@ class FGCCreator():
         return centerX + (radius * math.cos(angleInRadians)), centerY + (radius * math.sin(angleInRadians))
 
     def addArc(self, radius, stroke, stroke_width, angle_a=0, angle_b=0, center_x=0, center_y=0):
-        """ Adds an arc that bulges to the right as it moves from p0 to p1 """
+        """Adds an Arc to the svg"""
         start_x, start_y = self.polarToCartesian(center_x, center_y, radius, angle_b)
         end_x, end_y = self.polarToCartesian(center_x, center_y, radius, angle_a)
 
@@ -114,7 +116,7 @@ class FGCCreator():
 
         binary_list = self.byte_to_binary_list(self.error_correction_type.value, 2)
         all_data.extend(binary_list)
-        binary_list = self.byte_to_binary_list(self.version, 5)
+        binary_list = self.byte_to_binary_list(self.version, FGCCreator.VERSION_BITS)
         all_data.extend(binary_list)
         binary_list = self.string_to_binary_list(data)
         all_data.extend(binary_list)
