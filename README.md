@@ -5,9 +5,8 @@ Contributions are highly appreciated!
 ## Specification
 
 ### Data processing
-- 2 Bits Error Correction selection
 - 4 Bits Version Code
-- n Bits data which is XORed in error correction intervals
+- n Bits data which is encoded with the hamming error correction
 - 0 End bit
 
 All data gets inversed at the end, so all 0s turn into 1s and thus into dots in the final Code.
