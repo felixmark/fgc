@@ -24,13 +24,13 @@ Every ring has an amount of 1 bit per 45° / # of ring with a minimum of 4 degre
 I.e. that means the first ring can store up to 8 bits, the second one 16 and so forth.
 
 #### Data representation
-If the next bit is the same as this bit: Draw an arc
-If the next bit is not the same as this bit: Draw a dot
+If the next bit is the same as this bit: Draw an arc  
+If the next bit is not the same as this bit: Draw a dot  
   
 Also:  
-In the last layer there is an orientation Point for easier orientation calculation, if it fits. 
-It fits if the last layer has space for it plus some space around it.
-If it does not fit, it has to be placed in a seperate layer without any data.
-
+In the last layer there is an orientation Point for easier orientation calculation, if it fits.  
+It fits if the last layer has space for it plus some space around it.  
+If it does not fit, it has to be placed in a seperate layer without any data.  
+  
 ### Example svg
 ![Alt text](./static/example.svg)
