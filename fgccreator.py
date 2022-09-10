@@ -80,6 +80,9 @@ class FGCCreator():
         print("Hamming encoded data:")
         self.print_bitarray(all_data_encoded)
 
+        # All data should be the encoded data
+        all_data = all_data_encoded
+
         str_data = all_data_encoded.to01()
         str_data = [int(bit) for bit in str_data]
         all_data_decoded = bitarray(hamming_decode(str_data))
@@ -87,16 +90,17 @@ class FGCCreator():
         print("Hamming decoded data:")
         self.print_bitarray(all_data_decoded)
 
-        # Adding terminating 0
-        all_data = all_data_encoded
+        # Inverting all bits
+        all_data = ~all_data
+
+        
+        # Adding first and terminating 0
         all_data.append(False)
+        all_data.insert(0, False)
 
         print("="*80)
         print("Error correction and termination added:")
         self.print_bitarray(all_data)
-
-        # Inverting all bits
-        all_data = ~all_data
 
         print("="*80)
         print("Inverted final data:")

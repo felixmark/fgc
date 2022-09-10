@@ -10,16 +10,15 @@ class FGCDrawer():
 
     def draw_data_as_ring(self, ring_number, data):
         vector_length = self.CIRCLE_DISTANCE * 2 + ring_number * self.CIRCLE_DISTANCE
-        degree_per_bit = max(4, 30 // ring_number)
+        degree_per_bit = max(4, 45 / ring_number)
 
-        number_of_bits_in_ring = 360 // degree_per_bit
+        number_of_bits_in_ring = 360 // int(degree_per_bit)
         my_data = data[0:number_of_bits_in_ring]
         unprocessed_data = data[number_of_bits_in_ring:]
+        skip_bits = 0
         if len(unprocessed_data) == 0 and len(my_data) + 3 < number_of_bits_in_ring:
             self.addArc(radius=vector_length, stroke='black', angle_a=0, angle_b=0)
-            my_data.insert(0, 0)
-            my_data.insert(0, 0)
-            my_data.insert(-1, 0)
+            skip_bits = 2
         elif len(unprocessed_data) == 0:
             self.addArc(radius=vector_length+self.CIRCLE_DISTANCE, stroke='black', angle_a=0, angle_b=0)
         
@@ -29,17 +28,19 @@ class FGCDrawer():
         print("Degrees per bit:  %i" % degree_per_bit)
 
         for i in range(0, len(my_data)):
+            if skip_bits > 0:
+                skip_bits -= 1
+                continue
             current_angle = degree_per_bit*i
-            if my_data[i]:
+            if (i < len(my_data) - 1 and my_data[i] == my_data[i+1]) or (i == len(my_data) - 1 and my_data[i] == my_data[0]):
+                #  Draw arc
+                next_angle = current_angle + degree_per_bit
+                self.addArc(radius=vector_length, stroke=self.color, angle_a=current_angle, angle_b=next_angle)
+            else:
                 #  Draw dot
                 self.addArc(radius=vector_length, stroke=self.color, angle_a=current_angle, angle_b=current_angle)
-                # Draw Arc if necessary
-                if len(my_data) > 1 and i == len(my_data) - 1 and my_data[0] == True and len(unprocessed_data) > 0:
-                    self.addArc(radius=vector_length, stroke=self.color, angle_a=current_angle, angle_b=360)
-                elif len(my_data) > 1 and i < len(my_data) - 1 and my_data[i+1] == True:
-                    next_angle = current_angle + degree_per_bit
-                    self.addArc(radius=vector_length, stroke=self.color, angle_a=current_angle, angle_b=next_angle)
-            
+                
+
         print("Bit capacity:     %i" % number_of_bits_in_ring)
         print("Processed bits:   %i" % len(my_data))
         print("Unprocessed bits: %i" % len(unprocessed_data))
