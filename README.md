@@ -20,7 +20,7 @@ All of the rings have exactly distance d to every previous and next ring.
 The dot in the ring around it represents the orientation (0 degrees).  
 The black dot in the outer ring is for orientation purposes as well. 
 
-Every ring has an amount of 1 bit per 45° / # of ring with a minimum of 4 degrees per bit.
+Every ring has an amount of 1 bit per 45° / # of ring with a minimum of 4 degrees per bit.  
 I.e. that means the first ring can store up to 8 bits, the second one 16 and so forth.
 
 #### Data representation
