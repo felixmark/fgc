@@ -24,15 +24,14 @@ class FGCDrawer():
             current_angle = degree_per_bit*i
             if my_data[i]:
                 #  Draw dot
-                x_pos, y_pos = self.polarToCartesian(0, 0, radius=vector_length, angleInDegrees=current_angle)
-                self.shapes.add(self.drawing.circle(center=(x_pos, y_pos), r=self.STROKE_WIDTH/2))
+                self.addArc(radius=vector_length, stroke=self.color, angle_a=current_angle, angle_b=current_angle)
                 # Draw Arc if necessary
                 if len(my_data) > 1 and i == len(my_data) - 1 and my_data[0] == True and len(unprocessed_data) > 0:
                     self.addArc(radius=vector_length, stroke=self.color, angle_a=current_angle, angle_b=360)
                 elif len(my_data) > 1 and i < len(my_data) - 1 and my_data[i+1] == True:
                     next_angle = current_angle + degree_per_bit
                     self.addArc(radius=vector_length, stroke=self.color, angle_a=current_angle, angle_b=next_angle)
-
+            
         print("Bit capacity:     %i" % number_of_bits_in_ring)
         print("Processed bits:   %i" % len(my_data))
         print("Unprocessed bits: %i" % len(unprocessed_data))
@@ -59,7 +58,8 @@ class FGCDrawer():
         self.shapes.add(
             self.drawing.path(d=d,
                 fill="none", 
-                stroke=stroke, stroke_width=self.STROKE_WIDTH
+                stroke=stroke, stroke_width=self.STROKE_WIDTH,
+                stroke_linecap="round"
             )
         )
 
@@ -87,12 +87,8 @@ class FGCDrawer():
         # Center
         self.shapes.add(self.drawing.circle(center=(0, 0), r=self.STROKE_WIDTH*2, fill='black'))
         # Orientation
-        self.shapes.add(self.drawing.circle(center=(0, -self.CIRCLE_DISTANCE*2), r=self.STROKE_WIDTH/2, fill='black'))
+        self.addArc(radius=self.CIRCLE_DISTANCE*2, stroke='black', angle_a=0, angle_b=0)
         # First circle for distance measure
-        end_l_x, end_l_y = self.polarToCartesian(0, 0, radius=2*self.CIRCLE_DISTANCE, angleInDegrees=45)
-        end_r_x, end_r_y = self.polarToCartesian(0, 0, radius=2*self.CIRCLE_DISTANCE, angleInDegrees=315)
-        self.shapes.add(self.drawing.circle(center=(end_l_x, end_l_y), r=self.STROKE_WIDTH/2, fill='black'))
-        self.shapes.add(self.drawing.circle(center=(end_r_x, end_r_y), r=self.STROKE_WIDTH/2, fill='black'))
         self.addArc(radius=self.CIRCLE_DISTANCE*2, stroke='black', angle_a=45, angle_b=315)
 
         # Data as text
