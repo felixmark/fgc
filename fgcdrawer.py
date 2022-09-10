@@ -16,9 +16,9 @@ class FGCDrawer():
         my_data = data[0:number_of_bits_in_ring]
         unprocessed_data = data[number_of_bits_in_ring:]
         skip_bits = 0
-        if len(unprocessed_data) == 0 and len(my_data) + 3 < number_of_bits_in_ring:
+        if len(unprocessed_data) == 0 and len(my_data) + 2 < number_of_bits_in_ring:
             self.addArc(radius=vector_length, stroke='black', angle_a=0, angle_b=0)
-            skip_bits = 2
+            skip_bits = 1
         elif len(unprocessed_data) == 0:
             self.addArc(radius=vector_length+self.CIRCLE_DISTANCE, stroke='black', angle_a=0, angle_b=0)
         
