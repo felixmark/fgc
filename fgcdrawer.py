@@ -15,6 +15,13 @@ class FGCDrawer():
         number_of_bits_in_ring = 360 // degree_per_bit
         my_data = data[0:number_of_bits_in_ring]
         unprocessed_data = data[number_of_bits_in_ring:]
+        if len(unprocessed_data) == 0 and len(my_data) + 3 < number_of_bits_in_ring:
+            self.addArc(radius=vector_length, stroke='black', angle_a=0, angle_b=0)
+            my_data.insert(0, 0)
+            my_data.insert(0, 0)
+            my_data.insert(-1, 0)
+        elif len(unprocessed_data) == 0:
+            self.addArc(radius=vector_length+self.CIRCLE_DISTANCE, stroke='black', angle_a=0, angle_b=0)
         
         print("-"*80)
         print("Ring #%i" % ring_number)
@@ -99,7 +106,7 @@ class FGCDrawer():
         for line in data.split("\n"):
             self.drawing.add(self.drawing.text(
                 line, 
-                insert=(0, ring_number * self.CIRCLE_DISTANCE + self.CIRCLE_DISTANCE*3 + current_line * 5), 
+                insert=(0, ring_number * self.CIRCLE_DISTANCE + self.CIRCLE_DISTANCE*4 + current_line * 5), 
                 fill="black",
                 style="font-size:5px; font-weight: bold; text-anchor: middle;",
             ))
