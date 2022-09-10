@@ -1,5 +1,6 @@
 import math
 import svgwrite
+import base64
 
 class FGCDrawer():
 
@@ -66,16 +67,18 @@ class FGCDrawer():
     def draw_fgc(self, data, all_data, color, output_file):
         self.color = color
 
-        width = 50+(len(all_data)/2)
+        width = 50+(len(all_data)/4)
         height = 50+(len(all_data)/4)
         self.drawing = svgwrite.Drawing(
             filename=output_file, 
-            viewBox=(str(-width / 2) + "," + str(-height / 2)+","+str(width)+","+str(height)), debug=True) # draw.Drawing(width, height, origin='center', displayInline=False)
-        with open('style.css', 'r') as file:
+            viewBox=(str(-width / 2) + "," + str(-height / 2)+","+str(width)+","+str(height)), 
+            debug=True
+        )
+        with open('static/style.css', 'r') as file:
             css = file.read()
         self.drawing.defs.add(self.drawing.style(css))
+        self.drawing.add(self.drawing.rect(insert=(-width / 2, -width / 2), size=(width, height), rx=None, ry=None, fill='#f0f0f0'))
         self.shapes = self.drawing.add(self.drawing.g(id='shapes', fill=self.color))
-
 
         unprocessed_data:list = all_data
         ring_number = 1
@@ -89,7 +92,7 @@ class FGCDrawer():
         # Orientation
         self.addArc(radius=self.CIRCLE_DISTANCE*2, stroke='black', angle_a=0, angle_b=0)
         # First circle for distance measure
-        self.addArc(radius=self.CIRCLE_DISTANCE*2, stroke='black', angle_a=45, angle_b=315)
+        self.addArc(radius=self.CIRCLE_DISTANCE*2, stroke='black', angle_a=30, angle_b=330)
 
         # Data as text
         current_line = 0

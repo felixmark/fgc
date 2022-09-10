@@ -3,7 +3,7 @@ from fgcdrawer import FGCDrawer
 from bitarray import bitarray
 from bitarray.util import serialize, deserialize
 from enum import Enum
-from hamming import *
+from libs.hamming import *
 
 
 class FGCCreator():
