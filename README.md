@@ -29,7 +29,7 @@ It fits if the last layer has space for it.
 If it does not fit, it has to be placed in a seperate layer without any data.  
 After the orientation point, the sequence starts with the normal non-data 0.  
   
-**Visual explanation**
+#### Visual explanation
 ![Alt text](./static/explanation.png)
   
 ## Code execution
