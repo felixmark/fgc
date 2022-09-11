@@ -13,14 +13,14 @@ def main():
     
     if argument_count > 1:
         data = sys.argv[1]
-        file_name = str(sys.argv[1]).lower() + ".svg"
     if argument_count > 2:
         file_name = sys.argv[2]
 
     print("Fancy Galaxy Code creator")
     fgc_creator = FGCCreator()
     fgc_creator.create_fgc(
-        color="#008070",
+        color_start="#008060",
+        color_end="#006080",
         data=data,
         output_file=file_name
     )
