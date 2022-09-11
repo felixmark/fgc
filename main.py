@@ -14,10 +14,10 @@ from fgccreator import FGCCreator
 
 def main() -> None:
     """Entrypoint for creating an FGC."""
-    data:str = ""
-    file_name:str = "fgc.svg"
-    argument_count:int = len(sys.argv)
-    
+    data: str = ""
+    file_name: str = "fgc.svg"
+    argument_count: int = len(sys.argv)
+
     # Store arguments into variables
     if argument_count > 1:
         data = sys.argv[1]
@@ -26,11 +26,9 @@ def main() -> None:
 
     print("Fancy Galaxy Code (FGC) creator")
     fgc_creator = FGCCreator.create_fgc(
-        color_start="#008060",
-        color_end="#006080",
-        data=data,
-        output_file=file_name
+        color_start="#009060", color_end="#006090", data=data, output_file=file_name
     )
 
-if __name__ == '__main__':
+
+if __name__ == "__main__":
     main()

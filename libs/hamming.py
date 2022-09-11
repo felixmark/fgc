@@ -25,6 +25,7 @@ SOFTWARE.
 
 from libs.parity import *
 
+
 def find_error(bits):
     error_index = []
     check_bits = calculate_parity(bits.copy())

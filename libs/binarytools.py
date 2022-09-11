@@ -1,5 +1,6 @@
-from bitarray import bitarray 
-    
+from bitarray import bitarray
+
+
 def print_bitarray(bit_array, end="\n"):
     current_bit = 0
     bits_per_line = 60
@@ -12,16 +13,18 @@ def print_bitarray(bit_array, end="\n"):
             print("", end=" ")
     print("", end=end)
 
+
 def string_to_bitarray(string):
-    bit_array:bitarray = bitarray()
+    bit_array: bitarray = bitarray()
     for c in string:
         bit_array.extend(byte_to_bitarray(c, 8))
     return bit_array
 
+
 def byte_to_bitarray(data, lenght_in_bits):
-    bit_array:bitarray = bitarray()
+    bit_array: bitarray = bitarray()
     if type(data) == str:
         data = ord(data)
     for i in range(lenght_in_bits):
-        bit_array.append((bool) ((data >> i) & 1))
+        bit_array.append((bool)((data >> i) & 1))
     return bit_array[::-1]
