@@ -1,7 +1,7 @@
 # Fancy Galaxy Code (FGC)
 Fancy Galaxy Code (FGC) strifes to serve as the new and prettier QR Code straight from the future.  
 Contributions are highly appreciated!
-
+  
 ## Specification
 
 ### Data processing
@@ -24,9 +24,20 @@ If the next bit is the same as this bit: Draw an arc
 If the next bit is not the same as this bit: Draw a dot  
   
 Also:  
-In the last layer there is an orientation Point for easier orientation calculation, if it fits.  
+In the last layer there is an orientation point for easier orientation calculation, if it fits.  
 It fits if the last layer has space for it.  
 If it does not fit, it has to be placed in a seperate layer without any data.  
+After the orientation point, the sequence starts with the normal non-data 0.  
+  
+**Visual explanation**
+![Alt text](./static/explanation.png)
+  
+## Code execution
+Before execution you have to install the requirements by executing:  
+`pip install -r requirements.txt`  
+  
+Execution:  
+`python3 main.py 'Content of fgc' outputfile.svg`  
   
 ### Example svg
 ![Alt text](./static/example.svg)
