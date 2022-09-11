@@ -35,11 +35,6 @@ class FGCCreator():
         print_bitarray(all_data)
 
         # Apply Error Correction
-        while len(all_data) % 16 != 0:
-            all_data.append(0)
-        print("Original data extended to have a multiple of 16 bits:")
-        print_bitarray(all_data)
-        
         str_data = all_data.to01()
         str_data = [int(bit) for bit in str_data]
         all_data_encoded = bitarray(hamming_code(str_data))
