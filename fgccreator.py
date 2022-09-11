@@ -75,15 +75,11 @@ class FGCCreator():
         str_data = [int(bit) for bit in str_data]
         all_data_decoded = bitarray(hamming_decode(str_data))
 
-        print("Hamming decoded data:")
+        print("Hamming decoded data (check):")
         print_bitarray(all_data_decoded)
 
         print("="*80)
-        print("Error correction and termination added:")
-        print_bitarray(all_data)
-
-        print("="*80)
-        print("Inverted final data:")
+        print("Error correction bits added (final data):")
         print_bitarray(all_data)
         print("="*80)
 
