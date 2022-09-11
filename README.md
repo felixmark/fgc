@@ -1,6 +1,7 @@
 # Fancy Galaxy Code (FGC)
-Fancy Galaxy Code (FGC) strifes to serve as the new and prettier QR Code straight from the future.  
-Contributions are highly appreciated!
+Fancy Galaxy Code (FGC) is an open source standard for fast and reliable data representation.  
+FGC strifes to serve as a prettier QR-Code straight from the future.  
+Contributions and integrations into projects are highly appreciated!  
   
 ## Specification
 
