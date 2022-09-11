@@ -6,7 +6,7 @@ Contributions are highly appreciated!
 
 ### Data processing
 - 4 Version bits
-- n Data + Correction bits
+- n Data + Hamming Code correction bits
 
 
 ### Data representation
