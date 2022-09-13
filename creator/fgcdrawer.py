@@ -9,13 +9,13 @@ class FGCDrawer:
 
     CIRCLE_DISTANCE = 3
     STROKE_WIDTH = 2
-    CSS_FILE = "static/style.css"
+    CSS_FILE = "../static/style.css"
 
     def draw_data_as_ring(drawing, shapes, ring_number, data):
         vector_length = (
             FGCDrawer.CIRCLE_DISTANCE * 2 + ring_number * FGCDrawer.CIRCLE_DISTANCE
         )
-        degree_per_bit = max(5, max(1, 20 / max(1, ring_number / 2)))
+        degree_per_bit = max(4, max(1, 20 / max(1, ring_number / 2)))
         number_of_bits_in_ring = (360 // int(degree_per_bit)) - 1
         my_data = data[0:number_of_bits_in_ring]
         unprocessed_data = data[number_of_bits_in_ring:]

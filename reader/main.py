@@ -1,7 +1,7 @@
 import numpy as np
 import cv2
 
-img = cv2.imread('photo1.jpg')
+img = cv2.imread('test_images/photo1.jpg')
 
 gray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
 blurred = cv2.medianBlur(gray, 5) #cv2.bilateralFilter(gray,10,50,50)
