@@ -2,6 +2,14 @@ import numpy as np
 import cv2
 import imutils
 
+
+
+def show_image(image, title):
+    cv2.imshow(title, image)
+    cv2.waitKey(0)
+
+
+
 img = cv2.imread('test_images/photo1.jpg')
 hsv = cv2.cvtColor(img, cv2.COLOR_BGR2HSV)      # img in hsv space
 gray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
@@ -15,9 +23,6 @@ _, threshold = cv2.threshold(gray, 127, 255, cv2.THRESH_BINARY)
 contours, _ = cv2.findContours(
     threshold, cv2.RETR_TREE, cv2.CHAIN_APPROX_SIMPLE
 )
-
-cv2.imshow('threshold', threshold)
-cv2.waitKey(0)
 
 possible_fgc_ements = []
 centroids_only = []
@@ -50,10 +55,12 @@ for contour in contours[1:]:
         )
         centroids_only.append((x, y))
         cv2.drawContours(img, [contour], 0, (0, 255, 0), 2)
+        """
         cv2.putText(
             img, str(round(bounding_rect_size, 1)), (int(x), int(y)),
             cv2.FONT_HERSHEY_SIMPLEX, 0.6, (255, 255, 255), 2
         )
+        """
 
 x = [p[0] for p in centroids_only]
 y = [p[1] for p in centroids_only]
@@ -61,7 +68,7 @@ centroid = (sum(x) / len(centroids_only), sum(y) / len(centroids_only))
 centroid = (int(centroid[0]), int(centroid[1]))
 cv2.putText(
     img, "Center?", centroid,
-    cv2.FONT_HERSHEY_SIMPLEX, 0.6, (255, 0, 0), 2
+    cv2.FONT_HERSHEY_SIMPLEX, 0.6, (0, 0, 255), 2
 )
 
 min_offset = None
@@ -81,7 +88,6 @@ cv2.drawContours(img, [min_offset_pair[0]["contour"]], 0, (0, 0, 255), 2)
 cv2.drawContours(img, [min_offset_pair[1]["contour"]], 0, (0, 0, 255), 2)
   
 # displaying the image after drawing contours
-cv2.imshow('shapes', img)
-cv2.waitKey(0)
+show_image(img, "Result")
 cv2.destroyAllWindows()
 
