@@ -2,184 +2,203 @@ import numpy as np
 import cv2
 import imutils
 
-import numpy as np
-import cv2
-
-img = cv2.imread('test_images/photo1.jpg')
 
 def show_image(image, title="Image"):
+    resize_factor = 4
+    h, w = image.shape[:2]  #  suits for image containing any amount of channels
+    h = int(h / resize_factor)  #  one must compute beforehand
+    w = int(w / resize_factor)  #  and convert to INT
+    cv2.namedWindow(title, cv2.WINDOW_NORMAL)
+    cv2.resizeWindow(title, w, h)
     cv2.imshow(title, image)
     cv2.waitKey(0)
 
 
+def main():
+
+    test_images = [
+        { "img": 'test_images/1.jpg', "content": "Example" },
+        { "img": 'test_images/2.jpg', "content": "Milch." },
+        { "img": 'test_images/3.jpg', "content": "Milch." },
+        { "img": 'test_images/4.jpg', "content": "Milch." },
+        { "img": 'test_images/5.jpg', "content": "Milch." }
+    ]
 
 
-gray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
-blurred = cv2.medianBlur(gray, 5) #cv2.bilateralFilter(gray,10,50,50)
+    for test_image in test_images:
 
-minDist = 100
-param1 = 80 #500
-param2 = 60 #200 #smaller value-> more false circles
-minRadius = 5
-maxRadius = 100 #10
+        img = cv2.imread(test_image["img"])
+        img2 = cv2.imread(test_image["img"])
 
-show_image(blurred, "Blurry")
+        # Convert image to grayscale
+        gray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
 
-# docstring of HoughCircles: HoughCircles(image, method, dp, minDist[, circles[, param1[, param2[, minRadius[, maxRadius]]]]]) -> circles
-circles = cv2.HoughCircles(blurred, cv2.HOUGH_GRADIENT, 1, minDist, param1=param1, param2=param2, minRadius=minRadius, maxRadius=maxRadius)
+        # Blur image
+        blurred = cv2.medianBlur(gray, 5)
 
-if circles is not None:
-    center_circle = None
-    largest_radius = 0
+        # Parameters for Hough transform
+        minDist = 100
+        param1 = 80
+        param2 = 60
+        minRadius = 5
+        maxRadius = 100
 
-    closest_position = None
-    orientation_dot = None
+        # docstring of HoughCircles: HoughCircles(image, method, dp, minDist[, circles[, param1[, param2[, minRadius[, maxRadius]]]]]) -> circles
+        circles = cv2.HoughCircles(blurred, cv2.HOUGH_GRADIENT, 1, minDist, param1=param1, param2=param2, minRadius=minRadius, maxRadius=maxRadius)
 
-    circles = np.uint16(np.around(circles))
-    for circle in circles[0,:]:
-        radius = circle[2]
-        if radius > largest_radius:
-            largest_radius = radius
-            center_circle = circle
-        cv2.circle(img, (circle[0], circle[1]), radius, (255, 0, 0), 2)
+        if circles is not None:
+            center_circle = None
+            largest_radius = 0
 
-    center_circle_x = np.float(center_circle[0])
-    center_circle_y = np.float(center_circle[1])
+            closest_position = None
+            orientation_dot = None
 
-    for circle in circles[0,:]:
-        position_x = np.float(circle[0])
-        position_y = np.float(circle[1])
-        closeness_x = abs(center_circle_x - position_x)
-        closeness_y = abs(center_circle_y - position_y)
-        closeness_total = closeness_x + closeness_y
-        if closest_position is None or closeness_total < closest_position:
-            if closeness_total == 0 or circle[2] >= center_circle[2]/2:
-                continue
-            closest_position = closeness_total
-            orientation_dot = circle
+            circles = np.uint16(np.around(circles))
+            for circle in circles[0,:]:
+                radius = circle[2]
+                if radius > largest_radius:
+                    largest_radius = radius
+                    center_circle = circle
+                cv2.circle(img, (circle[0], circle[1]), radius, (255, 0, 0), 2)
 
-    # orientation_dot_x = np.float(orientation_dot[0])
-    # orientation_dot_y = np.float(orientation_dot[1])
+            center_circle_x = np.float(center_circle[0])
+            center_circle_y = np.float(center_circle[1])
 
-    # extended_orientation_point_x = (center_circle_x + (orientation_dot_x - center_circle_x) * 10)
-    # extended_orientation_point_y = (center_circle_y + (orientation_dot_y - center_circle_y) * 10)
+            for circle in circles[0,:]:
+                position_x = np.float(circle[0])
+                position_y = np.float(circle[1])
+                closeness_x = abs(center_circle_x - position_x)
+                closeness_y = abs(center_circle_y - position_y)
+                closeness_total = closeness_x + closeness_y
+                if closest_position is None or closeness_total < closest_position:
+                    if closeness_total == 0 or circle[2] >= center_circle[2]/2:
+                        continue
+                    closest_position = closeness_total
+                    orientation_dot = circle
 
-    # circle_distance = closest_position / 3
+            # orientation_dot_x = np.float(orientation_dot[0])
+            # orientation_dot_y = np.float(orientation_dot[1])
 
-    # # Center Circle
-    # cv2.circle(img, (center_circle[0], center_circle[1]), center_circle[2], (0, 255, 0), 4)
-    # # Orientation dot
-    # cv2.circle(img, (orientation_dot[0], orientation_dot[1]), orientation_dot[2], (0, 255, 0), 4)
-    # # Layers
-    # for i in range(1,6):
-    #     cv2.circle(img, (center_circle[0], center_circle[1]), int(closest_position + i*(circle_distance + circle_distance/2)), (0, 0, 255), 4)
-    # # Line for orientation
-    # cv2.line(img, (center_circle[0], center_circle[1]), (int(extended_orientation_point_x), int(extended_orientation_point_y)), (0, 0, 255), 4)
+            # extended_orientation_point_x = (center_circle_x + (orientation_dot_x - center_circle_x) * 10)
+            # extended_orientation_point_y = (center_circle_y + (orientation_dot_y - center_circle_y) * 10)
 
+            # circle_distance = closest_position / 3
 
-
-# Show result for testing:
-cv2.imshow('img', img)
-cv2.waitKey(0)
-cv2.destroyAllWindows() 
-
-
-
-
-
-
-
-
-
-
-
-
+            # # Center Circle
+            # cv2.circle(img, (center_circle[0], center_circle[1]), center_circle[2], (0, 255, 0), 4)
+            # # Orientation dot
+            # cv2.circle(img, (orientation_dot[0], orientation_dot[1]), orientation_dot[2], (0, 255, 0), 4)
+            # # Layers
+            # for i in range(1,6):
+            #     cv2.circle(img, (center_circle[0], center_circle[1]), int(closest_position + i*(circle_distance + circle_distance/2)), (0, 0, 255), 4)
+            # # Line for orientation
+            # cv2.line(img, (center_circle[0], center_circle[1]), (int(extended_orientation_point_x), int(extended_orientation_point_y)), (0, 0, 255), 4)
 
 
 
+        # Show result for testing:
+        show_image(img, "Result 1")
+        cv2.destroyAllWindows() 
 
 
 
 
 
 
-hsv = cv2.cvtColor(img, cv2.COLOR_BGR2HSV)      # img in hsv space
-gray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
 
 
 
-# setting threshold of gray image
-_, threshold = cv2.threshold(gray, 127, 255, cv2.THRESH_BINARY)
-  
-# using a findContours() function
-contours, _ = cv2.findContours(
-    threshold, cv2.RETR_TREE, cv2.CHAIN_APPROX_SIMPLE
-)
 
-possible_fgc_ements = []
-centroids_only = []
 
-for contour in contours[1:]:
-  
-    # cv2.approxPloyDP() function to approximate the shape
-    approx = cv2.approxPolyDP(
-        contour, 0.01 * cv2.arcLength(contour, True), True)
-  
-    # finding center point of shape
-    M = cv2.moments(contour)
-    if M['m00'] != 0.0:
-        x = int(M['m10']/M['m00'])
-        y = int(M['m01']/M['m00'])
-  
-    contour_sides = len(approx)
-    bounding_rect = cv2.minAreaRect(contour)
-    (x, y), (width, height), angle = bounding_rect
-    bounding_rect_size = width * height
 
-    # putting shape name at center of each shape
-    if contour_sides > 6 and contour_sides < 22 and bounding_rect_size > 300:
-        box = cv2.boxPoints(bounding_rect)
-        box = np.int0(box)
-        # cv2.drawContours(img,[box],0,(0,0,255),2)
 
-        possible_fgc_ements.append(
-            {"contour": contour, "x": x, "y": y}
+
+
+
+
+
+
+
+
+        hsv = cv2.cvtColor(img2, cv2.COLOR_BGR2HSV)      # img in hsv space
+        gray = cv2.cvtColor(img2, cv2.COLOR_BGR2GRAY)
+
+
+
+        # setting threshold of gray image
+        _, threshold = cv2.threshold(gray, 127, 255, cv2.THRESH_BINARY)
+        
+        # using a findContours() function
+        contours, _ = cv2.findContours(
+            threshold, cv2.RETR_TREE, cv2.CHAIN_APPROX_SIMPLE
         )
-        centroids_only.append((x, y))
-        cv2.drawContours(img, [contour], 0, (0, 255, 0), 2)
-        """
+
+        possible_fgc_ements = []
+        centroids_only = []
+
+        for contour in contours[1:]:
+        
+            # cv2.approxPloyDP() function to approximate the shape
+            approx = cv2.approxPolyDP(
+                contour, 0.01 * cv2.arcLength(contour, True), True)
+        
+            # finding center point of shape
+            M = cv2.moments(contour)
+            if M['m00'] != 0.0:
+                x = int(M['m10']/M['m00'])
+                y = int(M['m01']/M['m00'])
+        
+            contour_sides = len(approx)
+            bounding_rect = cv2.minAreaRect(contour)
+            (x, y), (width, height), angle = bounding_rect
+            bounding_rect_size = width * height
+
+            # putting shape name at center of each shape
+            if contour_sides > 6 and contour_sides < 22 and bounding_rect_size > 300:
+                box = cv2.boxPoints(bounding_rect)
+                box = np.int0(box)
+                # cv2.drawContours(img,[box],0,(0,0,255),2)
+
+                possible_fgc_ements.append(
+                    {"contour": contour, "x": x, "y": y}
+                )
+                centroids_only.append((x, y))
+                cv2.drawContours(img2, [contour], 0, (0, 255, 0), 2)
+                """
+                cv2.putText(
+                    img, str(round(bounding_rect_size, 1)), (int(x), int(y)),
+                    cv2.FONT_HERSHEY_SIMPLEX, 0.6, (255, 255, 255), 2
+                )
+                """
+
+        x = [p[0] for p in centroids_only]
+        y = [p[1] for p in centroids_only]
+        centroid = (sum(x) / len(centroids_only), sum(y) / len(centroids_only))
+        centroid = (int(centroid[0]), int(centroid[1]))
         cv2.putText(
-            img, str(round(bounding_rect_size, 1)), (int(x), int(y)),
-            cv2.FONT_HERSHEY_SIMPLEX, 0.6, (255, 255, 255), 2
+            img2, "Center?", centroid,
+            cv2.FONT_HERSHEY_SIMPLEX, 0.6, (0, 0, 255), 2
         )
-        """
 
-x = [p[0] for p in centroids_only]
-y = [p[1] for p in centroids_only]
-centroid = (sum(x) / len(centroids_only), sum(y) / len(centroids_only))
-centroid = (int(centroid[0]), int(centroid[1]))
-cv2.putText(
-    img, "Center?", centroid,
-    cv2.FONT_HERSHEY_SIMPLEX, 0.6, (0, 0, 255), 2
-)
+        min_offset = None
+        min_offset_pair = None
+        for a, contour_dict_1 in enumerate(possible_fgc_ements):
+            for b, contour_dict_2 in enumerate(possible_fgc_ements):
+                if a == b:
+                    continue
+                offset_x = abs(contour_dict_1["x"] - contour_dict_2["x"]) 
+                offset_y = abs(contour_dict_1["y"] - contour_dict_2["y"])
+                total_offset = offset_x + offset_y
+                if min_offset is None or total_offset < min_offset:
+                    min_offset = total_offset
+                    min_offset_pair = (contour_dict_1, contour_dict_2)
 
-min_offset = None
-min_offset_pair = None
-for a, contour_dict_1 in enumerate(possible_fgc_ements):
-    for b, contour_dict_2 in enumerate(possible_fgc_ements):
-        if a == b:
-            continue
-        offset_x = abs(contour_dict_1["x"] - contour_dict_2["x"]) 
-        offset_y = abs(contour_dict_1["y"] - contour_dict_2["y"])
-        total_offset = offset_x + offset_y
-        if min_offset is None or total_offset < min_offset:
-            min_offset = total_offset
-            min_offset_pair = (contour_dict_1, contour_dict_2)
+        cv2.drawContours(img2, [min_offset_pair[0]["contour"]], 0, (0, 0, 255), 2)
+        cv2.drawContours(img2, [min_offset_pair[1]["contour"]], 0, (0, 0, 255), 2)
+        
+        # displaying the image after drawing contours
+        show_image(img2, "Result 2")
+        cv2.destroyAllWindows()
 
-cv2.drawContours(img, [min_offset_pair[0]["contour"]], 0, (0, 0, 255), 2)
-cv2.drawContours(img, [min_offset_pair[1]["contour"]], 0, (0, 0, 255), 2)
-  
-# displaying the image after drawing contours
-show_image(img, "Result")
-cv2.destroyAllWindows()
-
+if __name__ == "__main__":
+    main()
