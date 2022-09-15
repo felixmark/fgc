@@ -1,17 +1,21 @@
 import math
+from typing import Tuple
 import svgwrite
-import base64
 from libs.binarytools import print_bitarray
 from colour import Color
 
 
 class FGCDrawer:
 
+    # Constants for drawing
     CIRCLE_DISTANCE = 3
     STROKE_WIDTH = 2
-    CSS_FILE = "../static/style.css"
+    CSS_FILE = "css/style.css"
 
-    def draw_data_as_ring(drawing, shapes, ring_number, data):
+    def draw_data_as_ring(drawing, groups, ring_number, data) -> list:
+        """Draws a single ring of data bits. The unprocessed bits will be returned."""
+
+        # Calculate radius of the ring and some more properties
         vector_length = (
             FGCDrawer.CIRCLE_DISTANCE * 2 + ring_number * FGCDrawer.CIRCLE_DISTANCE
         )
@@ -19,14 +23,16 @@ class FGCDrawer:
         number_of_bits_in_ring = (360 // int(degree_per_bit)) - 1
         my_data = data[0:number_of_bits_in_ring]
         unprocessed_data = data[number_of_bits_in_ring:]
-        my_data.insert(0, False)  # Insert 0 at the beginning of every ring
+        my_data.insert(0, False)  # Insert 0 at the beginning of every ring (important for decoding)
         skip_bits = 0
 
-        shapes.append(drawing.g(id=str(ring_number)))
+        # Add a new group, where bits will be drawn
+        groups.append(drawing.g(id=str(ring_number)))
 
+        # Check if this one is the last ring and add the orientation bit. (Hopefully will be deprecated when decoding works either way)
         if len(unprocessed_data) == 0 and len(my_data) + 3 < number_of_bits_in_ring:
             # If orientation dot fits into outer ring, put it there
-            shapes[0].add(
+            groups[0].add(
                 drawing.circle(
                     center=(0, -(vector_length)), r=FGCDrawer.STROKE_WIDTH / 2
                 )
@@ -35,7 +41,7 @@ class FGCDrawer:
             skip_bits = 1
         elif len(unprocessed_data) == 0:
             # If orientation dot does not fit into out ring put it in extra layer
-            shapes[0].add(
+            groups[0].add(
                 drawing.circle(
                     center=(0, -(vector_length + FGCDrawer.CIRCLE_DISTANCE)),
                     r=FGCDrawer.STROKE_WIDTH / 2,
@@ -49,6 +55,7 @@ class FGCDrawer:
         print_bitarray(my_data)
         print("Degrees per bit:  %i" % degree_per_bit)
 
+        # Draw all data bits in ring
         for i in range(0, len(my_data)):
             if skip_bits > 0:
                 skip_bits -= 1
@@ -59,19 +66,19 @@ class FGCDrawer:
             ):
                 # Draw arc
                 next_angle = current_angle + degree_per_bit
-                FGCDrawer.addArc(
+                FGCDrawer.add_arc(
                     drawing=drawing,
-                    shape=shapes[ring_number],
+                    shape=groups[ring_number],
                     radius=vector_length,
                     angle_a=current_angle,
                     angle_b=next_angle,
                 )
             else:
                 # Draw dot
-                x_pos, y_pos = FGCDrawer.polarToCartesian(
+                x_pos, y_pos = FGCDrawer.polar_to_cartesian(
                     0, 0, radius=vector_length, angleInDegrees=current_angle
                 )
-                shapes[ring_number].add(
+                groups[ring_number].add(
                     drawing.circle(center=(x_pos, y_pos), r=FGCDrawer.STROKE_WIDTH / 2)
                 )
 
@@ -79,21 +86,23 @@ class FGCDrawer:
         print("Processed bits:   %i" % len(my_data))
         print("Unprocessed bits: %i" % len(unprocessed_data))
 
+        # Return all the unprocessed data
         return unprocessed_data
 
-    def polarToCartesian(centerX, centerY, radius, angleInDegrees):
+    def polar_to_cartesian(centerX, centerY, radius, angleInDegrees) -> Tuple:
+        """Convert polar coordinates to cartesian coordinates."""
         angleInRadians = (angleInDegrees - 90) * math.pi / 180.0
         return (
             centerX + (radius * math.cos(angleInRadians)),
             centerY + (radius * math.sin(angleInRadians)),
         )
 
-    def addArc(drawing, shape, radius, angle_a=0, angle_b=0, center_x=0, center_y=0):
+    def add_arc(drawing, shape, radius, angle_a=0, angle_b=0, center_x=0, center_y=0) -> None:
         """Adds an Arc to the svg"""
-        start_x, start_y = FGCDrawer.polarToCartesian(
+        start_x, start_y = FGCDrawer.polar_to_cartesian(
             center_x, center_y, radius, angle_b
         )
-        end_x, end_y = FGCDrawer.polarToCartesian(center_x, center_y, radius, angle_a)
+        end_x, end_y = FGCDrawer.polar_to_cartesian(center_x, center_y, radius, angle_a)
 
         largeArcFlag = "0"
         if angle_b - angle_a > 180:
@@ -123,10 +132,12 @@ class FGCDrawer:
             )
         )
 
-    def draw_fgc(data, all_data, output_file, color_start, color_end):
+    def draw_fgc(data, all_data, output_file, color_start, color_end, background_color) -> None:
+        """Draws the given data bits as a fancy galaxy code svg."""
         color_start = Color(color_start)
         color_end = Color(color_end)
 
+        # Determine size by amount of data that has to be processed
         width = 50 + (len(all_data) / 4)
         height = 50 + (len(all_data) / 4)
         drawing = svgwrite.Drawing(
@@ -142,52 +153,60 @@ class FGCDrawer:
             ),
             debug=True,
         )
+
+        # Append css to svg for style (especially included font)
         with open(FGCDrawer.CSS_FILE, "r") as file:
             css = file.read()
         drawing.defs.add(drawing.style(css))
-        drawing.add(
-            drawing.rect(
-                insert=(-width / 2, -width / 2),
-                size=(width, height),
-                rx=None,
-                ry=None,
-                fill="#f0f0f0",
-            )
-        )
-        shapes = [drawing.g(id="basic-shapes")]
 
+        # Add background if wanted 
+        if background_color is not None:
+            drawing.add(
+                drawing.rect(
+                    insert=(-width / 2, -width / 2),
+                    size=(width, height),
+                    rx=None,
+                    ry=None,
+                    fill=background_color,
+                )
+            )
+
+        # Groups of shapes which get colored afterwards
+        groups = [drawing.g(id="basic-shapes")]
+
+        # Create the actual rings of data
         unprocessed_data: list = all_data
         ring_number = 1
         while len(unprocessed_data) > 0:
             unprocessed_data = FGCDrawer.draw_data_as_ring(
                 drawing=drawing,
-                shapes=shapes,
+                groups=groups,
                 ring_number=ring_number,
                 data=unprocessed_data,
             )
             ring_number += 1
 
-        # Inner circles for distance measure and orientation
+        # Draw inner circles for distance measurement and orientation
         # Center
-        shapes[0].add(drawing.circle(center=(0, 0), r=FGCDrawer.STROKE_WIDTH * 2))
+        groups[0].add(drawing.circle(center=(0, 0), r=FGCDrawer.STROKE_WIDTH * 2))
         # Orientation
-        shapes[0].add(
+        groups[0].add(
             drawing.circle(
                 center=(0, -FGCDrawer.CIRCLE_DISTANCE * 2), r=FGCDrawer.STROKE_WIDTH / 2
             )
         )
-        # First arc for distance measure
-        FGCDrawer.addArc(
+        # First arc for further distance measurement and center targetability
+        FGCDrawer.add_arc(
             drawing=drawing,
-            shape=shapes[0],
+            shape=groups[0],
             radius=FGCDrawer.CIRCLE_DISTANCE * 2,
             angle_a=30,
             angle_b=330,
         )
-        # Data as text
+        # Draw data as text
         current_line = 0
         for line in data.split("\n"):
-            shapes[0].add(
+            groups[0].add(
                 drawing.text(
                     line,
                     insert=(
@@ -201,17 +220,17 @@ class FGCDrawer:
             )
             current_line += 1
 
-        # Apply some color
-        colors = list(color_start.range_to(color_end, len(shapes) - 1))
+        # Apply color to the groups (rings) 
+        colors = list(color_start.range_to(color_end, len(groups) - 1))
         print("=" * 80)
         print("Color start: %s" % color_start)
         print("Color end:   %s" % color_end)
-        for i, shape in enumerate(shapes):
+        for i, group in enumerate(groups):
             if i == 0:
                 color = "black"
             else:
                 color = colors[i - 1]
-            for element in shape.elements:
+            for element in group.elements:
                 attributes = {}
                 if type(element) == svgwrite.shapes.Circle:
                     attributes["fill"] = color
@@ -219,7 +238,7 @@ class FGCDrawer:
                     attributes["stroke"] = color
                 element.update(attributes)
             # Add all shapes to drawing
-            drawing.add(shape)
+            drawing.add(group)
 
         # Save drawing to svg file
         print("=" * 80)
