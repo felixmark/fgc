@@ -84,8 +84,8 @@ def find_center_with_outlines(img, output_img, circle_positions):
                 circle_pairs_with_offset_and_closeness_to_hough_circle.append({
                     "x": int(average_circle_center[0]),
                     "y": int(average_circle_center[1]),
-                    "pair_offset": int(pair_offset),
-                    "closeness_to_hough_circle": int(closeness_to_hough_circle),
+                    "pair_offset": pair_offset,
+                    "closeness_to_hough_circle": closeness_to_hough_circle,
                     "shape_a": contour_dict_1["contour"],
                     "shape_b": contour_dict_2["contour"],
                 })
