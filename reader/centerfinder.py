@@ -18,7 +18,7 @@ def find_circle_positions_with_hough_transform(img, output_img) -> list:
             x = int(circle[0])
             y = int(circle[1])
             radius = int(circle[2])
-            cv2.circle(output_img, (x, y), radius, (255, 0, 0), 2)
+            #cv2.circle(output_img, (x, y), radius, (255, 0, 0), 2)
             circle_positions.append((x,y))
 
     return circle_positions
@@ -98,9 +98,9 @@ def find_center_with_outlines(img, output_img, circle_positions):
             best_score = score
             center_of_fgc = circle_pair
 
-    cv2.putText(
-        output_img, "Center", (center_of_fgc["x"], center_of_fgc["y"]),
-        cv2.FONT_HERSHEY_SIMPLEX, 0.6, (0, 0, 255), 2
-    )
-    cv2.drawContours(output_img, [center_of_fgc["shape_a"]], 0, (0, 0, 255), 2)
-    cv2.drawContours(output_img, [center_of_fgc["shape_b"]], 0, (0, 0, 255), 2)
+    if center_of_fgc is not None:
+        print("Center of FGC found!")
+        cv2.drawContours(output_img, [center_of_fgc["shape_a"]], 0, (0, 0, 255), 2)
+        cv2.drawContours(output_img, [center_of_fgc["shape_b"]], 0, (0, 0, 255), 2)
+    else:
+        print("No center of FGC found.")

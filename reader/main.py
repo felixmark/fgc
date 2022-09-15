@@ -2,17 +2,18 @@ import numpy as np
 import cv2
 import imutils
 from centerfinder import *
+import matplotlib.pyplot as plt
 
 
-def show_image(image, title="Image"):
+def show_image(image):
     resize_factor = 4
     h, w = image.shape[:2]  #  suits for image containing any amount of channels
     h = int(h / resize_factor)  #  one must compute beforehand
     w = int(w / resize_factor)  #  and convert to INT
-    cv2.namedWindow(title, cv2.WINDOW_NORMAL)
-    cv2.resizeWindow(title, w, h)
-    cv2.imshow(title, image)
-    cv2.waitKey(0)
+
+    plt_image = cv2.cvtColor(image, cv2.COLOR_BGR2RGB)
+    plt.imshow(plt_image)
+    plt.show()
 
 
 def main():
@@ -41,7 +42,7 @@ def main():
 
         circle_positions = find_circle_positions_with_hough_transform(blurred_gray_img, output_img)
         find_center_with_outlines(binary_img, output_img, circle_positions)
-        show_image(output_img, "Result 1 (Blue) and 2 (Red)")
+        show_image(output_img)
         cv2.destroyAllWindows() 
         
         
