@@ -1,8 +1,9 @@
 import cv2
+import math
 import numpy as np
 
 
-def find_circle_positions_with_hough_transform(img, output_img) -> list:
+def find_circle_positions_with_hough_transform(img, features) -> bool:
     # Hough transform
     minDist = 100
     param1 = 80
@@ -10,27 +11,29 @@ def find_circle_positions_with_hough_transform(img, output_img) -> list:
     minRadius = 5
     maxRadius = 100
     circles = cv2.HoughCircles(img, cv2.HOUGH_GRADIENT, 1, minDist, param1=param1, param2=param2, minRadius=minRadius, maxRadius=maxRadius)
-    circle_positions = []
+    features["hough_circles"] = circles
 
+    circle_positions = []
     if circles is not None:
         for circle in circles:
             circle = circle[0]
             x = int(circle[0])
             y = int(circle[1])
-            radius = int(circle[2])
-            #cv2.circle(output_img, (x, y), radius, (255, 0, 0), 2)
             circle_positions.append((x,y))
 
-    return circle_positions
+        features["hough_circle_positions"] = circle_positions
+        return True
+
+    return False
 
 
 def calculate_distance(point1, point2) -> bool:
     """Calculate distance of points."""
-    distance = abs(point1[0] - point2[0]) + abs(point1[1] - point2[1])
+    distance = math.sqrt((point1[0] - point2[0])**2 + (point1[1] - point2[1])**2)
     return distance
 
 
-def find_center_with_outlines(img, output_img, circle_positions):
+def find_center_with_outlines(img, features) -> bool:
     # using a findContours() function
     contours, _ = cv2.findContours(
         img, cv2.RETR_TREE, cv2.CHAIN_APPROX_SIMPLE
@@ -52,19 +55,18 @@ def find_center_with_outlines(img, output_img, circle_positions):
     
         contour_sides = len(approx)
         bounding_rect = cv2.minAreaRect(contour)
-        (x, y), (width, height), angle = bounding_rect
+        (_x, _y), (width, height), angle = bounding_rect
         bounding_rect_size = width * height
 
         # putting shape name at center of each shape
         if contour_sides > 6 and contour_sides < 22 and bounding_rect_size > 300:
             box = cv2.boxPoints(bounding_rect)
             box = np.int0(box)
-            # cv2.drawContours(img,[box],0,(0,0,255),2)
-
             possible_fgc_elements.append(
-                {"contour": contour, "x": x, "y": y}
+                {"contour": contour, "x": x, "y": y, "bounding_rect": bounding_rect}
             )
 
+    features["possible_fgc_elements"] = possible_fgc_elements
 
     
 
@@ -79,7 +81,7 @@ def find_center_with_outlines(img, output_img, circle_positions):
 
             average_circle_center = ((contour_dict_1["x"] + contour_dict_2["x"])/2, (contour_dict_1["y"] + contour_dict_2["y"])/2)
 
-            for circle_position in circle_positions:
+            for circle_position in features["hough_circle_positions"]:
                 closeness_to_hough_circle = calculate_distance(circle_position, average_circle_center)
                 circle_pairs_with_offset_and_closeness_to_hough_circle.append({
                     "x": int(average_circle_center[0]),
@@ -99,8 +101,44 @@ def find_center_with_outlines(img, output_img, circle_positions):
             center_of_fgc = circle_pair
 
     if center_of_fgc is not None:
-        print("Center of FGC found!")
-        cv2.drawContours(output_img, [center_of_fgc["shape_a"]], 0, (0, 0, 255), 2)
-        cv2.drawContours(output_img, [center_of_fgc["shape_b"]], 0, (0, 0, 255), 2)
-    else:
-        print("No center of FGC found.")
+        x_a, y_a, w_a, h_a = cv2.boundingRect(center_of_fgc["shape_a"])
+        x_b, y_b, w_b, h_b = cv2.boundingRect(center_of_fgc["shape_b"])
+        if w_a * h_a < w_b * h_b:
+            center_shape = center_of_fgc["shape_a"]
+            orientation_shape = center_of_fgc["shape_b"]
+        else:
+            center_shape = center_of_fgc["shape_b"]
+            orientation_shape = center_of_fgc["shape_a"]
+        
+        features["center_circle"] = center_shape
+        features["orientation_ring"] = orientation_shape
+        features["center_coordinates"] = (center_of_fgc["x"], center_of_fgc["y"])
+
+        return True
+
+    return False
+
+
+def find_orientation_dot(features) -> None:
+    for possible_fgc_element in features["possible_fgc_elements"]:
+        possible_fgc_element["distance_to_center"] = calculate_distance((possible_fgc_element["x"], possible_fgc_element["y"]), features["center_coordinates"])
+    
+    sorted_possible_fgc_elements = sorted(features["possible_fgc_elements"], key=lambda elem: elem["distance_to_center"])
+
+    features["possible_fgc_elements"] = sorted_possible_fgc_elements
+    features["orientation_dot"] = sorted_possible_fgc_elements[2]
+
+def sanitize_data(features) -> None:
+    max_jump_distance = features["orientation_dot"]["distance_to_center"]
+    print("Max jump distance:", max_jump_distance)
+    last_distance = 0
+    index = 0
+    while index < len(features["possible_fgc_elements"]):
+        element = features["possible_fgc_elements"][index]
+        if element["distance_to_center"] - last_distance > max_jump_distance:
+            # print("Removing:", int(element["distance_to_center"]))
+            features["possible_fgc_elements"].pop(index)
+        else:
+            # print("Keeping:", int(element["distance_to_center"]))
+            last_distance = element["distance_to_center"]
+            index += 1
