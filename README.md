@@ -35,7 +35,7 @@ If it does not fit, it has to be placed in a seperate layer without any data.
 After the orientation point, the sequence starts with the normal non-data 0.  
   
 #### Visual explanation
-![Alt text](./static/explanation.png)
+![Visual over on GitHub](./static/explanation.png)
   
 ## Code execution
 Before execution you have to install the requirements by executing:  
@@ -62,4 +62,4 @@ FGCCreator.create_fgc(data, output_file, color_start, color_end, background_colo
 ```  
   
 ## Example svg
-![Alt text](./static/example.svg)
+![Visual over on GitHub](./static/example.svg)
