@@ -79,10 +79,10 @@ def main():
 
                     cv2.putText(
                         output_img, 
-                        str(int(deg)), 
+                        str(int(element["index"])), 
                         (element["x"], element["y"]), 
                         cv2.FONT_HERSHEY_SIMPLEX, 
-                        1, (255,255,255), 2, cv2.LINE_AA
+                        0.5, (255,255,255), 2, cv2.LINE_AA
                     )
 
                 # Draw outline of center and orientation ring

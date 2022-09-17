@@ -1,3 +1,4 @@
+from pprint import pprint
 import cv2
 import math
 import numpy as np
@@ -133,6 +134,8 @@ def sanitize_data(features) -> None:
     print("Max jump distance:", max_jump_distance)
     last_distance = 0
     index = 0
+    circles_with_elements = []
+    current_circle = []
     while index < len(features["possible_fgc_elements"]):
         element = features["possible_fgc_elements"][index]
         if element["distance_to_center"] - last_distance > max_jump_distance:
@@ -140,5 +143,12 @@ def sanitize_data(features) -> None:
             features["possible_fgc_elements"].pop(index)
         else:
             # print("Keeping:", int(element["distance_to_center"]))
+            if element["distance_to_center"] - last_distance >= max_jump_distance/4:
+                circles_with_elements.append(current_circle)
+                current_circle = []
+            current_circle.append(index)
             last_distance = element["distance_to_center"]
+            element["index"] = index
             index += 1
+    circles_with_elements.append(current_circle)
+    pprint(circles_with_elements)
