@@ -40,5 +40,18 @@ Before execution you have to install the requirements by executing:
 Execution:  
 `python3 main.py 'Content of fgc' outputfile.svg`  
   
-### Example svg
+## Use the fgc-tools package
+Install the package via:
+```
+pip install solmate-sdk
+```
+
+Import the FGCCreator class and create an fgc:
+```
+from fgc_tools import FGCCreator
+
+FGCCreator.create_fgc(data, output_file, color_start, color_end, background_color)
+```  
+  
+## Example svg
 ![Alt text](./static/example.svg)
