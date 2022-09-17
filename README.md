@@ -35,10 +35,27 @@ After the orientation point, the sequence starts with the normal non-data 0.
   
 ## Code execution
 Before execution you have to install the requirements by executing:  
-`pip install -r requirements.txt`  
+```
+pip install -r requirements.txt
+```  
   
 Execution:  
-`python3 main.py 'Content of fgc' outputfile.svg`  
+```
+python3 main.py 'Content of fgc' outputfile.svg
+```
   
-### Example svg
+## Use the fgc-tools package
+Install the package via:
+```sh
+pip install fgc-tools
+```
+
+Import the FGCCreator class and create an fgc:
+```python
+from fgc_tools import FGCCreator
+
+FGCCreator.create_fgc(data, output_file, color_start, color_end, background_color)
+```  
+  
+## Example svg
 ![Alt text](./static/example.svg)
