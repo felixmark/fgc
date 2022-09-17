@@ -9,7 +9,7 @@ python3 main.py 'Content of fgc' outputfile.svg
 """
 
 import sys
-from fgccreator import FGCCreator
+from fgc_tools import FGCCreator
 
 
 def main() -> None:

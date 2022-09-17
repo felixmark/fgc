@@ -1,7 +1,8 @@
 import math
 from typing import Tuple
 import svgwrite
-from libs.binarytools import print_bitarray
+import os
+from .libs.binarytools import print_bitarray
 from colour import Color
 
 
@@ -10,7 +11,8 @@ class FGCDrawer:
     # Constants for drawing
     CIRCLE_DISTANCE = 3
     STROKE_WIDTH = 2
-    CSS_FILE = "css/style.css"
+    DIRNAME = os.path.dirname(__file__)
+    CSS_FILE = os.path.join(DIRNAME, "css/style.css")
 
     def draw_data_as_ring(drawing, groups, ring_number, data) -> list:
         """Draws a single ring of data bits. The unprocessed bits will be returned."""
