@@ -41,7 +41,7 @@ pip install -r requirements.txt
   
 Execution:  
 ```
-python3 main.py 'Content of fgc' outputfile.svg
+python3 fgc_tools_creator.py 'Content of fgc' outputfile.svg
 ```
   
 ## Use the fgc-tools package
