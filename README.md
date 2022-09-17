@@ -3,6 +3,10 @@ Fancy Galaxy Code (FGC) is an open source standard for fast and reliable data re
 FGC strifes to serve as a prettier QR-Code straight from the future.  
 Contributions and integrations into projects are highly appreciated!  
   
+## Links
+[PyPI Package](https://pypi.org/project/fgc-tools/)  
+[Online FGC Creator](https://ghostfox.de/fgc)  
+  
 ## Specification
 
 ### Data processing
@@ -31,7 +35,7 @@ If it does not fit, it has to be placed in a seperate layer without any data.
 After the orientation point, the sequence starts with the normal non-data 0.  
   
 #### Visual explanation
-![Alt text](./static/explanation.png)
+![Visual over on GitHub](./static/explanation.png)
   
 ## Code execution
 Before execution you have to install the requirements by executing:  
@@ -41,7 +45,7 @@ pip install -r requirements.txt
   
 Execution:  
 ```
-python3 main.py 'Content of fgc' outputfile.svg
+python3 fgc_tools_creator.py 'Content of fgc' outputfile.svg
 ```
   
 ## Use the fgc-tools package
@@ -58,4 +62,4 @@ FGCCreator.create_fgc(data, output_file, color_start, color_end, background_colo
 ```  
   
 ## Example svg
-![Alt text](./static/example.svg)
+![Visual over on GitHub](./static/example.svg)
