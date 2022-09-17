@@ -43,7 +43,7 @@ Execution:
 ## Use the fgc-tools package
 Install the package via:
 ```
-pip install solmate-sdk
+pip install fgc-tools
 ```
 
 Import the FGCCreator class and create an fgc:
