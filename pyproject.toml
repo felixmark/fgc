@@ -1,0 +1,35 @@
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[tool.hatch.build]
+include = [
+  "*.py",
+  "*.css",
+]
+
+[project]
+name = "fgc-tools"
+version = "0.0.3"
+authors = [
+  { name="Felix Mark", email="felix.mark@hotmail.com" },
+]
+description = "Fancy Galaxy Code creator package."
+readme = "README.md"
+license = { file="LICENSE" }
+requires-python = ">=3.7"
+classifiers = [
+    "Programming Language :: Python :: 3",
+    "License :: OSI Approved :: MIT License",
+    "Operating System :: OS Independent",
+]
+packages = [{ include = "fgc_tools" }]
+dependencies = [
+  'bitarray==2.6.0',
+  'colour==0.1.5',
+  'svgwrite==1.4.3',
+]
+
+[project.urls]
+"Homepage" = "https://github.com/felixmark/fgc"
+"Bug Tracker" = "https://github.com/felixmark/fgc/issues"
