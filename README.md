@@ -3,6 +3,10 @@ Fancy Galaxy Code (FGC) is an open source standard for fast and reliable data re
 FGC strifes to serve as a prettier QR-Code straight from the future.  
 Contributions and integrations into projects are highly appreciated!  
   
+## Links
+[PyPI Package](https://pypi.org/project/fgc-tools/)  
+[Online FGC Creator](https://ghostfox.de/fgc)  
+  
 ## Specification
 
 ### Data processing
