@@ -12,6 +12,7 @@ Contributions and integrations into projects are highly appreciated!
 ### Data processing
 - 4 Version bits
 - n Data + Hamming Code correction bits
+- 1 end bit (can be cut away when decoded)
 
 
 ### Data representation
