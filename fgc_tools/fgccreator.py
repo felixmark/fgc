@@ -13,7 +13,7 @@ class FGCCreator:
     VERSION = 1
 
     @staticmethod
-    def create_fgc(data, output_file, color_start, color_end, background_color) -> None:
+    def create_fgc(data, output_file, color_inner, color_outer, color_background, write_data_as_text) -> None:
         """Creates an fgc according to the given parameters."""
         all_data: bitarray = bitarray()
 
@@ -56,7 +56,8 @@ class FGCCreator:
             data, 
             all_data_encoded, 
             output_file, 
-            color_start=color_start, 
-            color_end=color_end,
-            background_color=background_color
+            color_inner=color_inner, 
+            color_outer=color_outer,
+            color_background=color_background,
+            write_data_as_text=write_data_as_text
         )

@@ -12,29 +12,30 @@ Contributions and integrations into projects are highly appreciated!
 ### Data processing
 - 4 Version bits
 - n Data + Hamming Code correction bits
-- 1 end bit (can be cut away when decoded)
+- 1 end bit if last layer is not perfectly filled (can be cut when decoded)
 
 
 ### Data representation
 #### General structure
-Center point is thick and has a distance d to the ring surrounding it.  
-All of the rings have exactly distance d to every previous and next ring.  
-The dot in the ring around it represents the orientation (0 degrees).  
-The black dot in the outer ring is for orientation purposes as well. 
+Center point is thick and has a distance d to the arc surrounding it.  
+All of the rings of data have exactly distance d to every previous and next ring.  
+The dot in the ring around the center point represents the orientation (0 degrees).  
 
-Every ring has an amount of n bits, calculated with: degree_per_bit = max(5, max(1, 20 / max(1, ring_number / 2)))  
-That means the rings can store up to degree_per_bit - 1 bits, since the first bit of every layer is always a 0.  
+Every ring can store up to degrees_per_bit - 1 bits, since the first bit of every layer is always a 0.  
+The degrees per bit can be looked up:  
+```
+Layer 1: 20° per bit = 360° / 20° - 1 bits = 17 bits 
+Layer 2: 15° per bit
+Layer 3: 12° per bit
+Layer 4: 10° per bit
+... 9, 8, 8, 6, 6, 6, 5, 5, 5, 5, 4, 4, 4, 4, 4 ...
+After the last 4° layer (layer 19), every following layer (>= 20) has 3° per bit and can therefore store 360° / 3° -1 bits = 119 bits
+```
   
 #### Data representation
 If the next bit is the same as this bit: Draw an arc  
 If the next bit is not the same as this bit: Draw a dot  
-  
-Also:  
-In the last layer there is an orientation point for easier orientation calculation, if it fits.  
-It fits if the last layer has space for it.  
-If it does not fit, it has to be placed in a seperate layer without any data.  
-After the orientation point, the sequence starts with the normal non-data 0.  
-  
+    
 #### Visual explanation
 ![Visual over on GitHub](./static/explanation.png)
   
@@ -59,7 +60,14 @@ Import the FGCCreator class and create an fgc:
 ```python
 from fgc_tools import FGCCreator
 
-FGCCreator.create_fgc(data, output_file, color_start, color_end, background_color)
+FGCCreator.create_fgc(
+    color_inner="#009060", 
+    color_outer="#006090",
+    data="Example", 
+    output_file="example.svg",
+    color_background="#ffffff",
+    write_data_as_text=True
+)
 ```  
   
 ## Example svg

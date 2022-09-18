@@ -13,7 +13,7 @@ class FGCDrawer:
     STROKE_WIDTH = 2
     DIRNAME = os.path.dirname(__file__)
     CSS_FILE = os.path.join(DIRNAME, "css/style.css")
-    DEGREES_PER_BIT = [ 20, 15, 10, 9, 8, 8, 6, 6, 5, 5, 5, 4, 4, 4, 4 ]
+    DEGREES_PER_BIT = [ 20, 15, 12, 10, 9, 8, 8, 6, 6, 6, 5, 5, 5, 5, 4, 4, 4, 4, 4 ]
 
     def draw_data_as_ring(drawing, groups, ring_number, data) -> list:
         """Draws a single ring of data bits. The unprocessed bits will be returned."""
@@ -48,7 +48,7 @@ class FGCDrawer:
         for i in range(0, len(my_data)):
             current_angle = degrees_per_bit * i
             if (i < len(my_data) - 1 and my_data[i] == my_data[i + 1]) or (
-                i == len(my_data) - 1 and my_data[i] == my_data[0] and len(my_data) == number_of_bits_in_ring + 1
+                i == len(my_data) - 1 and my_data[i] == my_data[0] and len(my_data) == number_of_bits_in_ring
             ):
                 # Draw arc
                 next_angle = current_angle + degrees_per_bit
@@ -118,10 +118,10 @@ class FGCDrawer:
             )
         )
 
-    def draw_fgc(data, all_data, output_file, color_start, color_end, background_color) -> None:
+    def draw_fgc(data, all_data, output_file, color_inner, color_outer, color_background, write_data_as_text) -> None:
         """Draws the given data bits as a fancy galaxy code svg."""
-        color_start = Color(color_start)
-        color_end = Color(color_end)
+        color_inner = Color(color_inner)
+        color_outer = Color(color_outer)
 
         # Determine size by amount of data that has to be processed
         width = 50 + (len(all_data) / 4)
@@ -140,23 +140,6 @@ class FGCDrawer:
             debug=True,
         )
 
-        # Append css to svg for style (especially included font)
-        with open(FGCDrawer.CSS_FILE, "r") as file:
-            css = file.read()
-        drawing.defs.add(drawing.style(css))
-
-        # Add background if wanted 
-        if background_color is not None:
-            drawing.add(
-                drawing.rect(
-                    insert=(-width / 2, -width / 2),
-                    size=(width, height),
-                    rx=None,
-                    ry=None,
-                    fill=background_color,
-                )
-            )
-
         # Groups of shapes which get colored afterwards
         groups = [drawing.g(id="basic-shapes")]
 
@@ -173,14 +156,17 @@ class FGCDrawer:
             ring_number += 1
 
         # Draw inner circles for distance measurement and orientation
+
         # Center
         groups[0].add(drawing.circle(center=(0, 0), r=FGCDrawer.STROKE_WIDTH * 2))
+
         # Orientation
         groups[0].add(
             drawing.circle(
                 center=(0, -FGCDrawer.CIRCLE_DISTANCE * 2), r=FGCDrawer.STROKE_WIDTH / 2
             )
         )
+
         # First arc for further distance measurement and center targetability
         FGCDrawer.add_arc(
             drawing=drawing,
@@ -189,28 +175,47 @@ class FGCDrawer:
             angle_a=30,
             angle_b=330,
         )
+
         # Draw data as text
-        current_line = 0
-        for line in data.split("\n"):
-            groups[0].add(
-                drawing.text(
-                    line,
-                    insert=(
-                        0,
-                        ring_number * FGCDrawer.CIRCLE_DISTANCE
-                        + FGCDrawer.CIRCLE_DISTANCE * 4
-                        + current_line * 5,
-                    ),
-                    style="font-size:5px; font-weight: bold; text-anchor: middle;",
+        if write_data_as_text:
+            current_line = 0
+            for line in data.split("\n"):
+                groups[0].add(
+                    drawing.text(
+                        line,
+                        insert=(
+                            0,
+                            ring_number * FGCDrawer.CIRCLE_DISTANCE
+                            + FGCDrawer.CIRCLE_DISTANCE * 4
+                            + current_line * 5,
+                        ),
+                        style="font-size:5px; font-weight: bold; text-anchor: middle;",
+                    )
+                )
+                current_line += 1
+
+        # Append css to svg for style (especially included font)
+        if write_data_as_text:
+            with open(FGCDrawer.CSS_FILE, "r") as file:
+                css = file.read()
+            drawing.defs.add(drawing.style(css))
+
+        # Add background if wanted 
+        if color_background is not None:
+            drawing.add(
+                drawing.circle(
+                    center=(0, 0), 
+                    fill=color_background,
+                    r=(FGCDrawer.STROKE_WIDTH * 3.5) + ((FGCDrawer.CIRCLE_DISTANCE) * ring_number)
                 )
             )
-            current_line += 1
 
         # Apply color to the groups (rings) 
-        colors = list(color_start.range_to(color_end, len(groups) - 1))
+        colors = list(color_inner.range_to(color_outer, len(groups) - 1))
         print("=" * 80)
-        print("Color start: %s" % color_start)
-        print("Color end:   %s" % color_end)
+        print("Color back:  %s" % color_background)
+        print("Color inner: %s" % color_inner)
+        print("Color outer: %s" % color_outer)
         for i, group in enumerate(groups):
             if i == 0:
                 color = "black"
