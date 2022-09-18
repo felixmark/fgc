@@ -35,9 +35,7 @@ class FGCDrawer:
 
         # Check if this one is the last ring and add the orientation bit. (Hopefully will be deprecated when decoding works either way)
         if len(unprocessed_data) == 0 and len(my_data) <= number_of_bits_in_ring:
-            print("Last bit:", my_data[-1])
             my_data.append(not my_data[-1])
-            print("Added bit:", my_data[-1])
 
         print("-" * 80)
         print("Ring #%i" % ring_number)
