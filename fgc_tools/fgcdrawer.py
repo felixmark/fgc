@@ -13,6 +13,7 @@ class FGCDrawer:
     STROKE_WIDTH = 2
     DIRNAME = os.path.dirname(__file__)
     CSS_FILE = os.path.join(DIRNAME, "css/style.css")
+    DEGREES_PER_BIT = [ 20, 15, 10, 9, 8, 8, 6, 6, 5, 5, 5, 4, 4, 4, 4 ]
 
     def draw_data_as_ring(drawing, groups, ring_number, data) -> list:
         """Draws a single ring of data bits. The unprocessed bits will be returned."""
@@ -21,53 +22,38 @@ class FGCDrawer:
         vector_length = (
             FGCDrawer.CIRCLE_DISTANCE * 2 + ring_number * FGCDrawer.CIRCLE_DISTANCE
         )
-        degree_per_bit = max(4, max(1, 20 / max(1, ring_number / 2)))
-        number_of_bits_in_ring = (360 // int(degree_per_bit)) - 1
-        my_data = data[0:number_of_bits_in_ring]
-        unprocessed_data = data[number_of_bits_in_ring:]
+        degrees_per_bit = 3
+        if ring_number < len(FGCDrawer.DEGREES_PER_BIT):
+            degrees_per_bit = FGCDrawer.DEGREES_PER_BIT[ring_number - 1]
+        number_of_bits_in_ring = (360 // int(degrees_per_bit))
+        my_data = data[0:number_of_bits_in_ring-1]
+        unprocessed_data = data[number_of_bits_in_ring-1:]
         my_data.insert(0, False)  # Insert 0 at the beginning of every ring (important for decoding)
-        skip_bits = 0
 
         # Add a new group, where bits will be drawn
         groups.append(drawing.g(id=str(ring_number)))
 
         # Check if this one is the last ring and add the orientation bit. (Hopefully will be deprecated when decoding works either way)
-        if len(unprocessed_data) == 0 and len(my_data) + 3 < number_of_bits_in_ring:
-            # If orientation dot fits into outer ring, put it there
-            groups[0].add(
-                drawing.circle(
-                    center=(0, -(vector_length)), r=FGCDrawer.STROKE_WIDTH / 2
-                )
-            )
-            my_data.insert(0, False)  # Insert 0 at the beginning which will get skipped
-            skip_bits = 1
-        elif len(unprocessed_data) == 0:
-            # If orientation dot does not fit into out ring put it in extra layer
-            groups[0].add(
-                drawing.circle(
-                    center=(0, -(vector_length + FGCDrawer.CIRCLE_DISTANCE)),
-                    r=FGCDrawer.STROKE_WIDTH / 2,
-                )
-            )
+        if len(unprocessed_data) == 0 and len(my_data) <= number_of_bits_in_ring:
+            print("Last bit:", my_data[-1])
+            my_data.append(not my_data[-1])
+            print("Added bit:", my_data[-1])
 
         print("-" * 80)
         print("Ring #%i" % ring_number)
         print("-" * 80)
         print("Data:")
         print_bitarray(my_data)
-        print("Degrees per bit:  %i" % degree_per_bit)
+        print("Degrees per bit:  %i" % degrees_per_bit)
 
         # Draw all data bits in ring
         for i in range(0, len(my_data)):
-            if skip_bits > 0:
-                skip_bits -= 1
-                continue
-            current_angle = degree_per_bit * i
+            current_angle = degrees_per_bit * i
             if (i < len(my_data) - 1 and my_data[i] == my_data[i + 1]) or (
-                i == len(my_data) - 1 and my_data[i] == my_data[0]
+                i == len(my_data) - 1 and my_data[i] == my_data[0] and len(my_data) == number_of_bits_in_ring + 1
             ):
                 # Draw arc
-                next_angle = current_angle + degree_per_bit
+                next_angle = current_angle + degrees_per_bit
                 FGCDrawer.add_arc(
                     drawing=drawing,
                     shape=groups[ring_number],
