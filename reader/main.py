@@ -74,6 +74,8 @@ def main() -> None:
                 # Now that we've found the center circle of the fgc, do some more examination of the data and contours
                 find_orientation_dot(features)
                 sanitize_data(features)
+                get_all_angles(features)
+                divide_elements_into_rings_by_angle_and_distance(features)
 
                 # Print some info on the output image
                 for element in features["possible_fgc_elements"]:
@@ -86,7 +88,7 @@ def main() -> None:
 
                     cv2.putText(
                         output_img, 
-                        str(int(element["index"])), 
+                        str(int(element["angle"])), 
                         (element["x"], element["y"]), 
                         cv2.FONT_HERSHEY_SIMPLEX, 
                         0.5, (255,255,255), 2, cv2.LINE_AA
@@ -108,7 +110,7 @@ def main() -> None:
         show_image(i, output_img)
 
         # Only process first image for now
-        break
+        # break
     
     input("Press Enter to quit.\n")
         

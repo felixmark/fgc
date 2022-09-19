@@ -1,3 +1,4 @@
+from cmath import nan
 from pprint import pprint
 import cv2
 import math
@@ -101,6 +102,8 @@ def find_center_with_contours(img, features) -> bool:
                 "closeness_to_hough_circle": min_closeness_to_hough_circle,
                 "shape_a": contour_dict_1["contour"],
                 "shape_b": contour_dict_2["contour"],
+                "center_a": (contour_dict_1["x"], contour_dict_1["y"]),
+                "center_b": (contour_dict_2["x"], contour_dict_2["y"]),
             })
 
     # Now we can determine the best match for our fgc center
@@ -117,16 +120,18 @@ def find_center_with_contours(img, features) -> bool:
         x_a, y_a, w_a, h_a = cv2.boundingRect(center_of_fgc["shape_a"])
         x_b, y_b, w_b, h_b = cv2.boundingRect(center_of_fgc["shape_b"])
         if w_a * h_a < w_b * h_b:
+            true_center = center_of_fgc["center_a"]
             center_shape = center_of_fgc["shape_a"]
             orientation_shape = center_of_fgc["shape_b"]
         else:
+            true_center = center_of_fgc["center_b"]
             center_shape = center_of_fgc["shape_b"]
             orientation_shape = center_of_fgc["shape_a"]
         
         # Store the center to the features
         features["center_circle"] = center_shape
         features["orientation_ring"] = orientation_shape
-        features["center_coordinates"] = (center_of_fgc["x"], center_of_fgc["y"])
+        features["center_coordinates"] = true_center
         return True
     return False
 
@@ -140,30 +145,56 @@ def find_orientation_dot(features) -> None:
     sorted_possible_fgc_elements = sorted(features["possible_fgc_elements"], key=lambda elem: elem["distance_to_center"])
 
     features["possible_fgc_elements"] = sorted_possible_fgc_elements
-    features["orientation_dot"] = sorted_possible_fgc_elements[2]   # Position 2 since the inner center and the orientation ring are also in the list
+    features["orientation_dot"] = features["possible_fgc_elements"][2]
+
 
 def sanitize_data(features) -> None:
     """Try to get rid of all contours outside of the fgc by setting a max jump distance between contour distances to the center."""
 
-    max_jump_distance = features["orientation_dot"]["distance_to_center"]
-    print("Max jump distance:", max_jump_distance)
-    last_distance = 0
-    index = 0
-    circles_with_elements = []
-    current_circle = []
+    max_jump_distance = features["orientation_dot"]["distance_to_center"] * 0.7
+    last_distance = features["orientation_dot"]["distance_to_center"]
+    index = 2
     while index < len(features["possible_fgc_elements"]):
         element = features["possible_fgc_elements"][index]
         if element["distance_to_center"] - last_distance > max_jump_distance:
-            # print("Removing:", int(element["distance_to_center"]))
             features["possible_fgc_elements"].pop(index)
         else:
-            # print("Keeping:", int(element["distance_to_center"]))
-            if element["distance_to_center"] - last_distance >= max_jump_distance/4:
-                circles_with_elements.append(current_circle)
-                current_circle = []
-            current_circle.append(index)
             last_distance = element["distance_to_center"]
             element["index"] = index
             index += 1
-    circles_with_elements.append(current_circle)
-    pprint(circles_with_elements)
+
+def get_all_angles(features) -> None:
+    vector_from_center_to_orientation_point = [
+        features["orientation_dot"]["x"] - features["center_coordinates"][0],
+        features["orientation_dot"]["y"] - features["center_coordinates"][1],
+    ]
+    for element in features["possible_fgc_elements"]:
+        vector_from_center_to_element = [
+            element["x"] - features["center_coordinates"][0],
+            element["y"] - features["center_coordinates"][1],
+        ]
+
+        unit_vector_1 = vector_from_center_to_orientation_point / np.linalg.norm(vector_from_center_to_orientation_point)
+        unit_vector_2 = vector_from_center_to_element / np.linalg.norm(vector_from_center_to_element)
+        dot_product = np.dot(unit_vector_1, unit_vector_2)
+        clipped_dot_product = np.clip(dot_product, -1.0, 1.0)
+        rad = np.arccos(clipped_dot_product)
+        if vector_from_center_to_orientation_point[0] * vector_from_center_to_element[1] - vector_from_center_to_orientation_point[1] * vector_from_center_to_element[0] < 0:
+            rad = -rad
+        deg = 0
+        if not math.isnan(rad):
+            deg = math.degrees(rad)
+            deg = math.floor(deg+0.5)
+            if deg < 0:
+                deg = 180 + (180 - abs(deg))
+            if deg >= 359:
+                deg = 0
+
+        element["angle"] = deg
+
+
+def divide_elements_into_rings_by_angle_and_distance(features):
+    rings = []
+    current_ring = []
+    current_angle = 0
+    print("divide_elements_into_rings_by_angle_and_distance not implemented yet.")
