@@ -19,16 +19,58 @@ def show_image(index, image) -> None:
     plt.show(block=False)
 
 
+def controller(img, brightness=255, contrast=127):
+    brightness = int((brightness - 0) * (255 - (-255)) / (510 - 0) + (-255))
+ 
+    contrast = int((contrast - 0) * (127 - (-127)) / (254 - 0) + (-127))
+ 
+    if brightness != 0:
+ 
+        if brightness > 0:
+ 
+            shadow = brightness
+ 
+            max = 255
+ 
+        else:
+ 
+            shadow = 0
+            max = 255 + brightness
+ 
+        al_pha = (max - shadow) / 255
+        ga_mma = shadow
+ 
+        # The function addWeighted
+        # calculates the weighted sum
+        # of two arrays
+        cal = cv2.addWeighted(img, al_pha,
+                              img, 0, ga_mma)
+ 
+    else:
+        cal = img
+ 
+    if contrast != 0:
+        Alpha = float(131 * (contrast + 127)) / (127 * (131 - contrast))
+        Gamma = 127 * (1 - Alpha)
+ 
+        # The function addWeighted calculates
+        # the weighted sum of two arrays
+        cal = cv2.addWeighted(cal, Alpha,
+                              cal, 0, Gamma)
+ 
+    return cal
+
+
 def main() -> None:
     print("FGC Reader started")
 
     # List of test images with their expected content
     test_images = [
-        { "img": 'test_images/1.jpg', "content": "Example" },
-        { "img": 'test_images/2.jpg', "content": "Milch." },
-        { "img": 'test_images/3.jpg', "content": "Milch." },
-        { "img": 'test_images/4.jpg', "content": "Milch." },
-        { "img": 'test_images/5.jpg', "content": "Milch." }
+        { "img": 'test_images/2.jpg', "content": "Level2 which is harder" },
+        { "img": 'test_images/1.jpg', "content": "Level1" },
+        { "img": 'test_images/3.jpg', "content": "Level3 which is super hard" },
+        { "img": 'test_images/4.jpg', "content": "Level1" },
+        { "img": 'test_images/5.jpg', "content": "Level2 which is harder" },
     ]
 
     for i, test_image in enumerate(test_images):
@@ -36,6 +78,11 @@ def main() -> None:
         # Run operations on img and draw on output_img
         img = cv2.imread(test_image["img"])
         output_img = cv2.imread(test_image["img"])
+
+        # Brightness, Contrast increase
+        img = controller(img, 200, 180)
+
+        show_image("Contrast improved " + str(i), img)
 
         # Features is used to store a lot of useful information 
         features = {
@@ -107,7 +154,7 @@ def main() -> None:
             print("Could not find fgc at all.")
 
         print("Time:   %.3f s" % (time.time() - start_time))
-        show_image(i, output_img)
+        show_image("Result " + str(i), output_img)
 
         # Only process first image for now
         # break
