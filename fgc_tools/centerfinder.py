@@ -49,7 +49,7 @@ def find_center_with_contours(img, features) -> bool:
     for contour in contours[1:]:
     
         approx = cv2.approxPolyDP(contour, 0.01 * cv2.arcLength(contour, True), True)
-    
+        
         # finding center point of shape
         M = cv2.moments(contour)
         if M['m00'] != 0.0:
@@ -59,13 +59,14 @@ def find_center_with_contours(img, features) -> bool:
         # The number of contour sides
         contour_sides = len(approx)
         bounding_rect = cv2.minAreaRect(contour)
-        (_x, _y), (width, height), _angle = bounding_rect
+        (_x_br, _y_br), (width, height), _angle = bounding_rect
         bounding_rect_size = width * height
 
         # Only consider elements with a certain amount of contour sides and a minimum size.
         if contour_sides > 6 and contour_sides < 22 and bounding_rect_size > 250:
             box = cv2.boxPoints(bounding_rect)
             box = np.int0(box)
+
             possible_fgc_elements.append(
                 {"contour": contour, "x": x, "y": y, "bounding_rect": bounding_rect}
             )
@@ -194,7 +195,24 @@ def get_all_angles(features) -> None:
 
 
 def divide_elements_into_rings_by_angle_and_distance(features):
+    current_ring = 0
+    current_distance = 0
     rings = []
-    current_ring = []
-    current_angle = 0
-    print("divide_elements_into_rings_by_angle_and_distance not implemented yet.")
+    angle_sorted_rings = []
+
+    for element in features["possible_fgc_elements"]:
+
+        if current_ring >= len(rings):
+            rings.append([])
+        rings[current_ring].append(element)
+
+        element_distance = element["distance_to_center"]
+        if abs(current_distance - element_distance) >= features["orientation_dot"]["distance_to_center"] * 0.2:
+            current_ring += 1
+            current_distance = element_distance
+
+    for ring in rings:
+        sorted_ring = sorted(ring, key=lambda elem: elem["angle"])
+        angle_sorted_rings.append(sorted_ring)
+
+    features["rings"] = angle_sorted_rings

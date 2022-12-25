@@ -8,6 +8,8 @@ from .cvfunctions import *
 from .centerfinder import *
 
 
+# Currently used fgc reader
+
 class FGCReader():
 
 
@@ -64,21 +66,31 @@ class FGCReader():
                 divide_elements_into_rings_by_angle_and_distance(features)
 
                 # Print some info on the output image
-                for element in features["possible_fgc_elements"]:
-                    cv2.drawContours(output_img,[element["contour"]],0,(255,255,0),2)
+                for ring_id, ring in enumerate(features["rings"]):
+                    for element_id, element in enumerate(ring):
+                        cv2.drawContours(output_img,[element["contour"]],0,(255,255,0),2)
 
-                    delta_x = element["x"] - features["center_coordinates"][0]
-                    delta_y = element["y"] - features["center_coordinates"][1]
-                    theta_radians = math.atan2(delta_y, delta_x)
-                    deg = (math.degrees(theta_radians) + 90) % 360
-
-                    cv2.putText(
-                        output_img, 
-                        str(int(element["angle"])), 
-                        (element["x"], element["y"]), 
-                        cv2.FONT_HERSHEY_SIMPLEX, 
-                        0.5, (255,255,255), 2, cv2.LINE_AA
-                    )
+                        cv2.putText(
+                            output_img, 
+                            "#" + str(ring_id) + " - " + str(element_id), 
+                            (element["x"], element["y"] - 15), 
+                            cv2.FONT_HERSHEY_SIMPLEX, 
+                            0.5, (0,190,0), 1, cv2.LINE_AA
+                        )
+                        cv2.putText(
+                            output_img, 
+                            str(int(element["angle"])) + " deg", 
+                            (element["x"], element["y"]), 
+                            cv2.FONT_HERSHEY_SIMPLEX, 
+                            0.5, (190,0,0), 1, cv2.LINE_AA
+                        )
+                        cv2.putText(
+                            output_img, 
+                            str(int(element["distance_to_center"])), 
+                            (element["x"], element["y"] + 15), 
+                            cv2.FONT_HERSHEY_SIMPLEX, 
+                            0.5, (0,0,190), 1, cv2.LINE_AA
+                        )
 
                 # Draw outline of center and orientation ring
                 cv2.drawContours(output_img, [features["center_circle"]], 0, (0, 0, 255), 2)
