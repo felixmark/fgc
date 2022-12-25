@@ -5,7 +5,7 @@ Before execution you have to install the requirements by executing:
 pip install -r requirements.txt
 
 Execution:
-python3 main.py 'Content of fgc' outputfile.svg
+python3 test_creator.py 'Content of fgc' outputfile.svg
 """
 
 import sys

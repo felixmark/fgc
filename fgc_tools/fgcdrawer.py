@@ -4,6 +4,7 @@ import svgwrite
 import os
 from .libs.binarytools import print_bitarray
 from colour import Color
+from .commonfunctions import CommonFunctions
 
 
 class FGCDrawer:
@@ -13,7 +14,6 @@ class FGCDrawer:
     STROKE_WIDTH = 2
     DIRNAME = os.path.dirname(__file__)
     CSS_FILE = os.path.join(DIRNAME, "css/style.css")
-    DEGREES_PER_BIT = [ 20, 15, 12, 10, 9, 8, 8, 6, 6, 6, 5, 5, 5, 5, 4, 4, 4, 4, 4 ]
 
     def draw_data_as_ring(drawing, groups, ring_number, data) -> list:
         """Draws a single ring of data bits. The unprocessed bits will be returned."""
@@ -22,9 +22,7 @@ class FGCDrawer:
         vector_length = (
             FGCDrawer.CIRCLE_DISTANCE * 2 + ring_number * FGCDrawer.CIRCLE_DISTANCE
         )
-        degrees_per_bit = 3
-        if ring_number < len(FGCDrawer.DEGREES_PER_BIT):
-            degrees_per_bit = FGCDrawer.DEGREES_PER_BIT[ring_number - 1]
+        degrees_per_bit = CommonFunctions.get_degrees_per_bit(ring_number)
         number_of_bits_in_ring = (360 // int(degrees_per_bit))
         my_data = data[0:number_of_bits_in_ring-1]
         unprocessed_data = data[number_of_bits_in_ring-1:]
