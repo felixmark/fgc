@@ -3,6 +3,8 @@ import cv2
 import time
 from .cvfunctions import *
 from .featurehandler import *
+from bitarray import bitarray
+from .libs.hamming import *
 
 
 # Currently used fgc reader
@@ -20,7 +22,7 @@ class FGCReader():
         # Brightness, Contrast increase
         img = set_brightness_contrast(img, 200, 180)
 
-        show_image("Contrast improved of: " + image_path, img)
+        # show_image("Contrast improved of: " + image_path, img)
 
         # Features is used to store a lot of useful information 
         features = {
@@ -49,7 +51,7 @@ class FGCReader():
         gray_img = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
         blurred_gray_img = cv2.medianBlur(gray_img, 5)
         _, binary_img = cv2.threshold(gray_img, 127, 255, cv2.THRESH_BINARY)
-        show_image("Binary of: " + image_path, binary_img)
+        # show_image("Binary of: " + image_path, binary_img)
         # hsv_img = cv2.cvtColor(img, cv2.COLOR_BGR2HSV)    # Not needed yet
 
         print("Result: ", end="")
@@ -66,6 +68,9 @@ class FGCReader():
 
                 # Print some info on the output image
                 cv2.circle(output_img, [features["center_coordinates"][0], features["center_coordinates"][1]], 4, (255,255,255), 2)
+
+                for target_position in features["target_positions"]:
+                    cv2.drawMarker(output_img, target_position, (255,0,0), cv2.MARKER_DIAMOND, 5, 3)
 
                 for ring_id, ring in enumerate(features["rings"]):
                     for element_id, element in enumerate(ring):
@@ -97,27 +102,29 @@ class FGCReader():
                             cv2.FONT_HERSHEY_SIMPLEX, 
                             0.5, (0,0,190), 1, cv2.LINE_AA
                         )
-                        cv2.putText(
-                            output_img, 
-                            str(element["no_of_dots"]), 
-                            (element["x"], element["y"] + 30), 
-                            cv2.FONT_HERSHEY_SIMPLEX, 
-                            0.5, (0,190,0), 1, cv2.LINE_AA
-                        )
 
                 # Draw outline of center and orientation ring
                 cv2.drawContours(output_img, [features["center_circle"]], 0, (0, 0, 255), 2)
                 cv2.drawContours(output_img, [features["orientation_ring"]], 0, (0, 0, 255), 2)
                 cv2.drawContours(output_img, [features["orientation_dot"]["contour"]], 0, (0, 255, 0), 2)
-
-                # TODO unfinished
-
             else:
                 print("Could not find outline of circle.")
         else:
             print("Could not find fgc at all.")
 
-        print("Time:   %.3f s" % (time.time() - start_time))
+        raw_binary_string = ''.join([str(ch) for ch in features["data"]])
+        read_time = (time.time() - start_time)
         show_image("Result of " + image_path, output_img)
         
-        return "Well..."
+
+        all_data_decoded = hamming_decode(features["data"])
+        version = all_data_decoded[:4]
+        text = all_data_decoded[4:]
+        binary_string = ''.join([str(ch) for ch in text])
+
+        str_data = "".join([chr(int(x,2)) for x in [
+                binary_string[i:i+8] for i in range(0,len(binary_string), 8)
+            ]
+        ])[:-1]
+
+        return (str_data, version, read_time, raw_binary_string)

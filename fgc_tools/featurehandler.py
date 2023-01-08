@@ -218,9 +218,6 @@ def divide_elements_into_rings_by_angle_and_distance(features):
     # Divide elements into rings by furthest_distance_to_center
     for element in features["possible_fgc_elements"]:
 
-        # If there is a sudden increase in distance from one contours furthest_distance_to_center to the next one create a new ring
-        print("Furthest distance of contour:", int(element["furthest_distance_to_center"]))
-
         # Increase ring if there is a jump in distance to center
         if abs(current_distance - element["furthest_distance_to_center"]) >= features["orientation_dot"]["distance_to_center"] * 0.3:
             current_ring += 1
@@ -236,60 +233,85 @@ def divide_elements_into_rings_by_angle_and_distance(features):
         current_distance = element["furthest_distance_to_center"]
 
     # Get number of dots for each contour
-    for ring_id, ring in enumerate(rings):
+    for ring in rings:
+        if len(ring) < 1: continue
         sorted_ring = sorted(ring, key=lambda elem: elem["angle"])
-        for element in sorted_ring:
-            element["no_of_dots"] = int((element["arc_length"] * 3) / (360 - CommonFunctions.get_degrees_per_bit(ring_id)))
         angle_sorted_rings.append(sorted_ring)
 
     features["rings"] = angle_sorted_rings
 
 
+def rotate_vector(v,deg):
+    v = np.array(v)
+    assert len(v)==2
+    
+    phi = np.deg2rad(deg)
+    s = np.sin(phi)
+    c = np.cos(phi)
+    M = np.array([[c,-s],[s, c]])
+
+    return M.dot(v)
+
+
 def get_data_from_rings(features):
     currently_zero = True
     data_rings = []
+    data = []
+    
+    features["target_positions"] = []
+
     for ring_id, ring in enumerate(features["rings"]):
+
+        # Skip first two "rings" because they are the center circle and the orientation ring+dot
         if ring_id < 2:
             continue
 
+        ring_id = ring_id - 1
+
         data_ring = []
         currently_zero = True   # Every ring begins with a zero
+        vector_from_center_to_orientation_point = [
+            (features["orientation_dot"]["x"] - features["center_coordinates"][0]),
+            (features["orientation_dot"]["y"] - features["center_coordinates"][1]),
+        ]
+        vector_from_center_to_dot = [
+            vector_from_center_to_orientation_point[0] / 2 + ((vector_from_center_to_orientation_point[0] / 2) * (ring_id + 1)),
+            vector_from_center_to_orientation_point[1] / 2 + ((vector_from_center_to_orientation_point[1] / 2) * (ring_id + 1)),
+        ]
 
-        # TODO get first and last element of ring and check,
-        # which one contains the 0 degree dot and make decision if starting with 0 or 1 based on it
+        degrees_per_bit = CommonFunctions.get_degrees_per_bit(ring_id)
+        numBits = int( 360 / degrees_per_bit )
+        
+        current_contour_angle = None
 
-        for element in ring:
-            for i in range(0,element["no_of_dots"]):
-                if currently_zero:
-                    data_ring.append(0)
-                else:
-                    data_ring.append(1)
-            currently_zero = not currently_zero
+        for pos in range(numBits):
+            rotated_vector = vector_from_center_to_dot
+            if pos > 0:
+                rotated_vector = rotate_vector( vector_from_center_to_dot, degrees_per_bit * pos )
+            # Get position and check in which contour it lands in
+            target_position = [
+                int(features["center_coordinates"][0] + rotated_vector[0]), 
+                int(features["center_coordinates"][1] + rotated_vector[1])
+            ]
+            features["target_positions"].append(target_position)
+
+            # Check all contours if they contain the calculated position
+            for element in ring:
+                is_point_in_contour = cv2.pointPolygonTest(element["contour"], (target_position[0], target_position[1]), False)
+                if is_point_in_contour == 1:
+                    if pos > 0:
+                        if current_contour_angle is not None and current_contour_angle != element["angle"]:
+                            currently_zero = not currently_zero
+                        if currently_zero:
+                            data_ring.append(0)
+                            data.append(0)
+                        else:
+                            data_ring.append(1)
+                            data.append(1)
+
+                    current_contour_angle = element["angle"]
         
         data_rings.append(data_ring)
 
-
-    # dpb = CommonFunctions.get_degrees_per_bit(i)
-    # numBits = int(360/dpb)-1
-    # dict_rings[i] = []
-    
-    # bitVal = False
-    
-    # for pos in range(numBits):
-    #     v_valid = rotate_vector(vDot, dpb * (pos + 1) )
-    #     v_valid_c = np.array( np.round(pos_center + v_valid), dtype=np.int )
-    #     bit_valid = img_bin[v_valid_c[1], v_valid_c[0] ] > 127 # check if the next dot exists for the bit inbetween to count
-    #     if not bit_valid: break
-        
-    #     v_info = rotate_vector(vDot, dpb * (pos + 1/2) )
-    #     v_info_c = np.array( np.round(pos_center + v_info), dtype=np.int )
-    #     bit_info = img_bin[v_info_c[1], v_info_c[0] ] > 127 # check if bit is set
-    #     dict_rings[i].append(1 if bit_info else 0)
-    #     bitVal = bitVal if bit_info else not bitVal
-    #     bit_string += str(1 if bitVal else 0)
-        
-    #     col = [63,200,0] if bit_info else [0,0,255]
-    #     marker = cv2.MARKER_DIAMOND if bit_info else cv2.MARKER_TILTED_CROSS
-    #     img = cv2.drawMarker(img, v_info_c, col, marker,5,3)
-    
-    print("DATA:", data_rings)
+    features["data_rings"] = data_rings
+    features["data"] = data

@@ -14,21 +14,24 @@ def main():
     ]
 
     for test_image in test_images:
-        data_string = FGCReader.read_image(test_image["img"])
+        str_data, version, read_time, raw_binary_string = FGCReader.read_image(test_image["img"])
 
-        print("Test image:", test_image["img"])
-        print("Result: ", end="")
-        if data_string == test_image["content"]:
+        print("Test image: %s" % test_image["img"])
+        print("RAW Read:   %s" % raw_binary_string)
+        print("Version:    %s" % str(version))
+        print("Read Time:  %s" % str(read_time))
+        print("Test data:  %s" % str(list(test_image["content"])))
+        print("Read data:  %s" % str(list(str_data)))
+        print("Result:     ", end="")
+        if str_data == test_image["content"]:
             print("PASSED.")
         else:
             print("FAILED.")
         
         # Only process first image for now
-        break
+        
 
     plt.show()
-
-    input("Press Enter to quit.\n")
 
 if __name__ == '__main__':
     main()
