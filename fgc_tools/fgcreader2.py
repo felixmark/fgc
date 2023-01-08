@@ -1,11 +1,8 @@
 import numpy as np
 import cv2
-# import imutils
-import matplotlib.pyplot as plt
 import time
-from .commonfunctions import CommonFunctions
 from .cvfunctions import *
-from .centerfinder import *
+from .featurehandler import *
 
 
 # Currently used fgc reader
@@ -52,6 +49,7 @@ class FGCReader():
         gray_img = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
         blurred_gray_img = cv2.medianBlur(gray_img, 5)
         _, binary_img = cv2.threshold(gray_img, 127, 255, cv2.THRESH_BINARY)
+        show_image("Binary of: " + image_path, binary_img)
         # hsv_img = cv2.cvtColor(img, cv2.COLOR_BGR2HSV)    # Not needed yet
 
         print("Result: ", end="")
@@ -64,15 +62,23 @@ class FGCReader():
                 sanitize_data(features)
                 get_all_angles(features)
                 divide_elements_into_rings_by_angle_and_distance(features)
+                get_data_from_rings(features)
 
                 # Print some info on the output image
+                cv2.circle(output_img, [features["center_coordinates"][0], features["center_coordinates"][1]], 4, (255,255,255), 2)
+
                 for ring_id, ring in enumerate(features["rings"]):
                     for element_id, element in enumerate(ring):
-                        cv2.drawContours(output_img,[element["contour"]],0,(255,255,0),2)
+                        cv2.circle(output_img, [element["x"], element["y"]], 4, (255,255,0), 1)
+
+                        outline_color = (255,255,0)
+                        if ring_id % 2:
+                            outline_color = (0,255,255)
+                        cv2.drawContours(output_img,[element["contour"]],0,outline_color,2)
 
                         cv2.putText(
                             output_img, 
-                            "#" + str(ring_id) + " - " + str(element_id), 
+                            str(ring_id) + ":" + str(element_id), 
                             (element["x"], element["y"] - 15), 
                             cv2.FONT_HERSHEY_SIMPLEX, 
                             0.5, (0,190,0), 1, cv2.LINE_AA
@@ -86,15 +92,22 @@ class FGCReader():
                         )
                         cv2.putText(
                             output_img, 
-                            str(int(element["distance_to_center"])), 
+                            str(int(element["furthest_distance_to_center"])), 
                             (element["x"], element["y"] + 15), 
                             cv2.FONT_HERSHEY_SIMPLEX, 
                             0.5, (0,0,190), 1, cv2.LINE_AA
                         )
+                        cv2.putText(
+                            output_img, 
+                            str(element["no_of_dots"]), 
+                            (element["x"], element["y"] + 30), 
+                            cv2.FONT_HERSHEY_SIMPLEX, 
+                            0.5, (0,190,0), 1, cv2.LINE_AA
+                        )
 
                 # Draw outline of center and orientation ring
                 cv2.drawContours(output_img, [features["center_circle"]], 0, (0, 0, 255), 2)
-                cv2.drawContours(output_img, [features["orientation_ring"]], 0, (255, 0, 255), 2)
+                cv2.drawContours(output_img, [features["orientation_ring"]], 0, (0, 0, 255), 2)
                 cv2.drawContours(output_img, [features["orientation_dot"]["contour"]], 0, (0, 255, 0), 2)
 
                 # TODO unfinished
