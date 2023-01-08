@@ -3,7 +3,6 @@ import cv2
 import time
 from .cvfunctions import *
 from .featurehandler import *
-from bitarray import bitarray
 from .libs.hamming import *
 
 
@@ -11,18 +10,28 @@ from .libs.hamming import *
 
 class FGCReader():
 
-
     def read_image(image_path) -> str:
 
         # Run operations on img and draw on output_img
         img = cv2.imread(image_path)
         output_img = cv2.imread(image_path)
 
+        # Get image dimensions
+        height = img.shape[0]
+        width = img.shape[1]
 
-        # Brightness, Contrast increase
-        img = set_brightness_contrast(img, 200, 180)
+        # Resize images if they are too large
+        max_w_h = 2500
+        if width > height and width > max_w_h:
+            img = image_resize(img, width=max_w_h)
+            output_img = image_resize(output_img, width=max_w_h)
+        elif height > max_w_h:
+            img = image_resize(img, height=max_w_h)
+            output_img = image_resize(output_img, height=max_w_h)
 
-        # show_image("Contrast improved of: " + image_path, img)
+        # Get image dimensions after resize
+        height = img.shape[0]
+        width = img.shape[1]
 
         # Features is used to store a lot of useful information 
         features = {
@@ -34,30 +43,19 @@ class FGCReader():
             "hough_circles": None
         }
 
-        # Get image dimensions
-        height = img.shape[0]
-        width = img.shape[1]
-
-        # Print some information
-        print("="*60)
-        print("Image:  " + image_path)
-        print("Width:  %i" % width)
-        print("Height: %i" % height)
-
         # Measure time of calculations for optimization purposes (since it will be re-written in C++ for mobile devices later)
         start_time = time.time()
 
         # Calculate some alternative representations of the input image
         gray_img = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
-        blurred_gray_img = cv2.medianBlur(gray_img, 5)
-        _, binary_img = cv2.threshold(gray_img, 127, 255, cv2.THRESH_BINARY)
+        blurred_gray_img = cv2.medianBlur(gray_img, 7)
+        _, binary_img = cv2.threshold(gray_img, 200, 255, cv2.THRESH_BINARY)
         # show_image("Binary of: " + image_path, binary_img)
         # hsv_img = cv2.cvtColor(img, cv2.COLOR_BGR2HSV)    # Not needed yet
 
-        print("Result: ", end="")
+        print("Doing stuff...")
         if find_circle_positions_with_hough_transform(blurred_gray_img, features):
-            if find_center_with_contours(binary_img, features):
-                print("FOUND center of fgc!")
+            if find_center_with_contours(binary_img, img, features):
 
                 # Now that we've found the center circle of the fgc, do some more examination of the data and contours
                 find_orientation_dot(features)
@@ -67,14 +65,14 @@ class FGCReader():
                 get_data_from_rings(features)
 
                 # Print some info on the output image
-                cv2.circle(output_img, [features["center_coordinates"][0], features["center_coordinates"][1]], 4, (255,255,255), 2)
+                cv2.circle(output_img, (features["center_coordinates"][0], features["center_coordinates"][1]), 4, (255,255,255), 2)
 
                 for target_position in features["target_positions"]:
-                    cv2.drawMarker(output_img, target_position, (255,0,0), cv2.MARKER_DIAMOND, 5, 3)
+                    cv2.drawMarker(output_img, (target_position[0], target_position[1]), (255,0,0), cv2.MARKER_DIAMOND, 5, 3)
 
                 for ring_id, ring in enumerate(features["rings"]):
                     for element_id, element in enumerate(ring):
-                        cv2.circle(output_img, [element["x"], element["y"]], 4, (255,255,0), 1)
+                        cv2.circle(output_img, (element["x"], element["y"]), 4, (255,255,0), 1)
 
                         outline_color = (255,255,0)
                         if ring_id % 2:
@@ -116,7 +114,7 @@ class FGCReader():
         read_time = (time.time() - start_time)
         show_image("Result of " + image_path, output_img)
         
-        if features["data"]:
+        try:
             all_data_decoded = hamming_decode(features["data"])
             version = all_data_decoded[:4]
             text = all_data_decoded[4:]
@@ -125,8 +123,11 @@ class FGCReader():
             str_data = "".join([chr(int(x,2)) for x in [
                     binary_string[i:i+8] for i in range(0,len(binary_string), 8)
                 ]
-            ])[:-1]
+            ])
+            # Strip all 0s away
+            while (str_data[-1] == "\0"):
+                str_data = str_data[:-1]
 
             return (str_data, version, read_time, raw_binary_string)
-        else:
-            return ("", [], read_time, raw_binary_string)
+        except:
+            return ("", [], read_time, "-")

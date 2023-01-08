@@ -3,6 +3,19 @@ import math
 import numpy as np
 from .commonfunctions import CommonFunctions
 
+def image_resize(image, width = None, height = None, inter = cv2.INTER_AREA):
+    dim = None
+    (h, w) = image.shape[:2]
+    if width is None and height is None:
+        return image
+    if width is None:
+        r = height / float(h)
+        dim = (int(w * r), height)
+    else:
+        r = width / float(w)
+        dim = (width, int(h * r))
+    resized = cv2.resize(image, dim, interpolation = inter)
+    return resized
 
 def find_circle_positions_with_hough_transform(img, features) -> bool:
     # Hough transform parameters
@@ -33,13 +46,20 @@ def calculate_distance(point1, point2) -> bool:
     distance = math.sqrt((point1[0] - point2[0])**2 + (point1[1] - point2[1])**2)
     return distance
 
+def get_color_for_contour(img, contour):
+    # Gets called A LOT -> make it more efficient
+    mask = np.zeros(img.shape[:2], dtype=np.uint8)
+    mask = cv2.drawContours(mask, [contour], -1, 255, -1)
+    col_mean = cv2.mean(img,mask)
+    return (col_mean[0] + col_mean[1] + col_mean[2]) // 3
 
-def find_center_with_contours(img, features) -> bool:
+
+def find_center_with_contours(img_binary, img_original, features) -> bool:
     """Funky function to determine the center of the fgc.
     It tries to find a point in the image, where two overlapping contours are as close as possible to a hough transform found circle."""
 
     contours, _ = cv2.findContours(
-        img, cv2.RETR_TREE, cv2.CHAIN_APPROX_SIMPLE
+        img_binary, cv2.RETR_TREE, cv2.CHAIN_APPROX_SIMPLE
     )
 
     # Store all possible elements of the fgc in this list
@@ -62,12 +82,14 @@ def find_center_with_contours(img, features) -> bool:
         bounding_rect_size = width * height
 
         # Only consider elements with a certain amount of contour sides and a minimum size.
-        if contour_sides > 6 and contour_sides < 22 and bounding_rect_size > 250:
+        if contour_sides > 6 and contour_sides < 22 and bounding_rect_size > 200:
             box = cv2.boxPoints(bounding_rect)
             box = np.int0(box)
+            
+            color = get_color_for_contour(img_original, contour)
 
             possible_fgc_elements.append(
-                {"contour": contour, "x": x, "y": y, "bounding_rect": bounding_rect}
+                {"contour": contour, "x": x, "y": y, "bounding_rect": bounding_rect, "sides": contour_sides, "color": color}
             )
     # Store possible fgc elements in features
     features["possible_fgc_elements"] = possible_fgc_elements
@@ -80,9 +102,7 @@ def find_center_with_contours(img, features) -> bool:
             if a == b:
                 continue
 
-            offset_x = abs(contour_dict_1["x"] - contour_dict_2["x"]) 
-            offset_y = abs(contour_dict_1["y"] - contour_dict_2["y"])
-            pair_offset = offset_x + offset_y
+            pair_offset = calculate_distance([contour_dict_1["x"], contour_dict_1["y"]],[contour_dict_2["x"], contour_dict_2["y"]])
 
             # Calculate the average center of both contours 
             average_circle_center = ((contour_dict_1["x"] + contour_dict_2["x"])/2, (contour_dict_1["y"] + contour_dict_2["y"])/2)
@@ -94,10 +114,27 @@ def find_center_with_contours(img, features) -> bool:
                 if min_closeness_to_hough_circle is None or closeness_to_hough_circle < min_closeness_to_hough_circle:
                     min_closeness_to_hough_circle = closeness_to_hough_circle
 
+            # Get bounding rect sizes
+            (_x_br, _y_br), (width, height), _angle = contour_dict_1["bounding_rect"]
+            bounding_rect_size_a = width * height
+            (_x_br, _y_br), (width, height), _angle = contour_dict_2["bounding_rect"]
+            bounding_rect_size_b = width * height
+
+            if bounding_rect_size_a > bounding_rect_size_b:
+                bounding_rect_size_big = bounding_rect_size_a
+                bounding_rect_size_small = bounding_rect_size_b
+            else:
+                bounding_rect_size_big = bounding_rect_size_b
+                bounding_rect_size_small = bounding_rect_size_a
+
             # Store the found pair
             circle_pairs_with_offset_and_closeness_to_hough_circle.append({
                 "x": int(average_circle_center[0]),
                 "y": int(average_circle_center[1]),
+                "bounding_rect_size_small": bounding_rect_size_small,
+                "bounding_rect_size_big": bounding_rect_size_big,
+                "total_sides": contour_dict_1["sides"] + contour_dict_2["sides"],
+                "total_color": contour_dict_1["color"] + contour_dict_2["color"],
                 "pair_offset": pair_offset,
                 "closeness_to_hough_circle": min_closeness_to_hough_circle,
                 "shape_a": contour_dict_1["contour"],
@@ -110,7 +147,12 @@ def find_center_with_contours(img, features) -> bool:
     center_of_fgc = None
     best_score = None
     for circle_pair in circle_pairs_with_offset_and_closeness_to_hough_circle:
-        score = circle_pair["pair_offset"] + circle_pair["closeness_to_hough_circle"]
+        # relation_big_small_score = abs(circle_pair["bounding_rect_size_small"] - (circle_pair["bounding_rect_size_big"] * 0.75))
+        pair_offset_score = circle_pair["pair_offset"]
+        closeness_to_hough_circle_score = circle_pair["closeness_to_hough_circle"] * 3
+        side_score = circle_pair["total_sides"]
+        color_score = circle_pair["total_color"] * 50
+        score = pair_offset_score + closeness_to_hough_circle_score + side_score + color_score
         if best_score is None or score < best_score:
             best_score = score
             center_of_fgc = circle_pair
@@ -153,24 +195,41 @@ def find_orientation_dot(features) -> None:
     center_circle_area = w2 * h2
     while (possible_orientation_dot_area >= center_circle_area):
         features["possible_fgc_elements"].pop(2)
-        possible_orientation_dot = features["possible_fgc_elements"][2]
-        _x,_y,w,h = cv2.boundingRect(possible_orientation_dot["contour"])
-        possible_orientation_dot_area = w * h
+        if len(features["possible_fgc_elements"]) > 2:
+            possible_orientation_dot = features["possible_fgc_elements"][2]
+            _x,_y,w,h = cv2.boundingRect(possible_orientation_dot["contour"])
+            possible_orientation_dot_area = w * h
+        else:
+            break
     features["orientation_dot"] = possible_orientation_dot
 
 
 def sanitize_data(features) -> None:
     """Try to get rid of all contours outside of the fgc by setting a max jump distance between contour distances to the center."""
 
-    max_jump_distance = features["orientation_dot"]["distance_to_center"] * 0.7
-    last_distance = features["orientation_dot"]["distance_to_center"]
+    # Add furthest_distance_to_center entry to all contours
+    for element in features["possible_fgc_elements"]:
+        furthest_distance_to_center = 0
+        for point in element["contour"]:
+
+            point_distance = calculate_distance(features["center_coordinates"], point[0]) 
+            if point_distance > furthest_distance_to_center:
+                furthest_distance_to_center = point_distance
+        element["furthest_distance_to_center"] = furthest_distance_to_center
+
+    # Sort contours by furthest_distance_to_center
+    features["possible_fgc_elements"] = sorted(features["possible_fgc_elements"], key=lambda elem: elem["furthest_distance_to_center"])
+
+    # Remove all contours which are too far from the previous contour
+    max_jump_distance = features["orientation_dot"]["distance_to_center"] * 0.5
+    last_distance = features["possible_fgc_elements"][1]["furthest_distance_to_center"]
     index = 2
     while index < len(features["possible_fgc_elements"]):
         element = features["possible_fgc_elements"][index]
-        if element["distance_to_center"] - last_distance > max_jump_distance:
+        if element["furthest_distance_to_center"] - last_distance > max_jump_distance:
             features["possible_fgc_elements"].pop(index)
         else:
-            last_distance = element["distance_to_center"]
+            last_distance = element["furthest_distance_to_center"]
             element["index"] = index
             index += 1
 
@@ -209,22 +268,6 @@ def divide_elements_into_rings_by_angle_and_distance(features):
     current_distance = 0
     rings = []
     angle_sorted_rings = []
-
-    # Add furthest_distance_to_center entry to all contours
-    for element in features["possible_fgc_elements"]:
-        furthest_distance_to_center = 0
-        for point in element["contour"]:
-
-            point_distance = calculate_distance(features["center_coordinates"], point[0]) 
-            if point_distance > furthest_distance_to_center:
-                furthest_distance_to_center = point_distance
-        element["furthest_distance_to_center"] = furthest_distance_to_center
-
-        arc_length = cv2.arcLength(element["contour"], True)    # Calculates the perimeter of the contour
-        element["arc_length"] = arc_length
-
-    # Sort contours by furthest_distance_to_center
-    features["possible_fgc_elements"] = sorted(features["possible_fgc_elements"], key=lambda elem: elem["furthest_distance_to_center"])
 
     # Divide elements into rings by furthest_distance_to_center
     for element in features["possible_fgc_elements"]:
