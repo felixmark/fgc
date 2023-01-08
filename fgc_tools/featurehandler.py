@@ -145,7 +145,18 @@ def find_orientation_dot(features) -> None:
     sorted_possible_fgc_elements = sorted(features["possible_fgc_elements"], key=lambda elem: elem["distance_to_center"])
 
     features["possible_fgc_elements"] = sorted_possible_fgc_elements
-    features["orientation_dot"] = features["possible_fgc_elements"][2]
+
+    possible_orientation_dot = features["possible_fgc_elements"][2]
+    _x,_y,w,h = cv2.boundingRect(possible_orientation_dot["contour"])
+    _x2,_y2,w2,h2 = cv2.boundingRect(features["center_circle"])
+    possible_orientation_dot_area = w * h
+    center_circle_area = w2 * h2
+    while (possible_orientation_dot_area >= center_circle_area):
+        features["possible_fgc_elements"].pop(2)
+        possible_orientation_dot = features["possible_fgc_elements"][2]
+        _x,_y,w,h = cv2.boundingRect(possible_orientation_dot["contour"])
+        possible_orientation_dot_area = w * h
+    features["orientation_dot"] = possible_orientation_dot
 
 
 def sanitize_data(features) -> None:

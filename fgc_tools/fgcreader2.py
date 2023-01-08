@@ -116,15 +116,17 @@ class FGCReader():
         read_time = (time.time() - start_time)
         show_image("Result of " + image_path, output_img)
         
+        if features["data"]:
+            all_data_decoded = hamming_decode(features["data"])
+            version = all_data_decoded[:4]
+            text = all_data_decoded[4:]
+            binary_string = ''.join([str(ch) for ch in text])
 
-        all_data_decoded = hamming_decode(features["data"])
-        version = all_data_decoded[:4]
-        text = all_data_decoded[4:]
-        binary_string = ''.join([str(ch) for ch in text])
+            str_data = "".join([chr(int(x,2)) for x in [
+                    binary_string[i:i+8] for i in range(0,len(binary_string), 8)
+                ]
+            ])[:-1]
 
-        str_data = "".join([chr(int(x,2)) for x in [
-                binary_string[i:i+8] for i in range(0,len(binary_string), 8)
-            ]
-        ])[:-1]
-
-        return (str_data, version, read_time, raw_binary_string)
+            return (str_data, version, read_time, raw_binary_string)
+        else:
+            return ("", [], read_time, raw_binary_string)

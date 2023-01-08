@@ -27,9 +27,6 @@ def main():
             print("PASSED.")
         else:
             print("FAILED.")
-        
-        # Only process first image for now
-        
 
     plt.show()
 
