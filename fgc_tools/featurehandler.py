@@ -37,6 +37,7 @@ def find_circle_positions_with_hough_transform(img, features) -> bool:
             circle_positions.append((x,y))
 
         features["hough_circle_positions"] = circle_positions
+        print(f"Found {len(circles)} hough circle{'' if len(circles) == 1 else 's'}.")
         return True
     return False
 
@@ -66,7 +67,6 @@ def find_center_with_contours(img_binary, img_original, features) -> bool:
     possible_fgc_elements = []
 
     for contour in contours[1:]:
-    
         approx = cv2.approxPolyDP(contour, 0.01 * cv2.arcLength(contour, True), True)
         
         # finding center point of shape
@@ -82,7 +82,7 @@ def find_center_with_contours(img_binary, img_original, features) -> bool:
         bounding_rect_size = width * height
 
         # Only consider elements with a certain amount of contour sides and a minimum size.
-        if contour_sides > 6 and contour_sides < 22 and bounding_rect_size > 200:
+        if contour_sides > 6 and contour_sides < 22 and bounding_rect_size >= 100:
             box = cv2.boxPoints(bounding_rect)
             box = np.int0(box)
             
@@ -313,6 +313,8 @@ def get_data_from_rings(features):
     data = []
     
     features["target_positions"] = []
+    features["data_rings"] = []
+    features["data"] = []
 
     for ring_id, ring in enumerate(features["rings"]):
 
@@ -350,6 +352,7 @@ def get_data_from_rings(features):
             features["target_positions"].append(target_position)
 
             # Check all contours if they contain the calculated position
+            found_contour = False
             for element in ring:
                 is_point_in_contour = cv2.pointPolygonTest(element["contour"], (target_position[0], target_position[1]), False)
                 if is_point_in_contour == 1:
@@ -363,7 +366,12 @@ def get_data_from_rings(features):
                             data_ring.append(1)
                             data.append(1)
 
+                    found_contour = True
                     current_contour_angle = element["angle"]
+                    break
+
+            if not found_contour:
+                break
         
         data_rings.append(data_ring)
 

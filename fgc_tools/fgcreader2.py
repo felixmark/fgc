@@ -49,11 +49,10 @@ class FGCReader():
         # Calculate some alternative representations of the input image
         gray_img = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
         blurred_gray_img = cv2.medianBlur(gray_img, 7)
-        _, binary_img = cv2.threshold(gray_img, 200, 255, cv2.THRESH_BINARY)
-        # show_image("Binary of: " + image_path, binary_img)
+        _, binary_img = cv2.threshold(gray_img, 128, 255, cv2.THRESH_BINARY)
+        show_image("Binary of: " + image_path, binary_img)
         # hsv_img = cv2.cvtColor(img, cv2.COLOR_BGR2HSV)    # Not needed yet
 
-        print("Doing stuff...")
         if find_circle_positions_with_hough_transform(blurred_gray_img, features):
             if find_center_with_contours(binary_img, img, features):
 
@@ -68,53 +67,54 @@ class FGCReader():
                 cv2.circle(output_img, (features["center_coordinates"][0], features["center_coordinates"][1]), 4, (255,255,255), 2)
 
                 for target_position in features["target_positions"]:
-                    cv2.drawMarker(output_img, (target_position[0], target_position[1]), (255,0,0), cv2.MARKER_DIAMOND, 5, 3)
+                    cv2.drawMarker(output_img, (target_position[0], target_position[1]), (0,255,0), cv2.MARKER_TILTED_CROSS, 5, 1)
 
                 for ring_id, ring in enumerate(features["rings"]):
                     for element_id, element in enumerate(ring):
-                        cv2.circle(output_img, (element["x"], element["y"]), 4, (255,255,0), 1)
+                        # cv2.circle(output_img, (element["x"], element["y"]), 4, (255,255,0), 1)
 
                         outline_color = (255,255,0)
                         if ring_id % 2:
                             outline_color = (0,255,255)
-                        cv2.drawContours(output_img,[element["contour"]],0,outline_color,2)
+                        cv2.drawContours(output_img, [element["contour"]], 0, outline_color, 1)
 
-                        cv2.putText(
-                            output_img, 
-                            str(ring_id) + ":" + str(element_id), 
-                            (element["x"], element["y"] - 15), 
-                            cv2.FONT_HERSHEY_SIMPLEX, 
-                            0.5, (0,190,0), 1, cv2.LINE_AA
-                        )
-                        cv2.putText(
-                            output_img, 
-                            str(int(element["angle"])) + " deg", 
-                            (element["x"], element["y"]), 
-                            cv2.FONT_HERSHEY_SIMPLEX, 
-                            0.5, (190,0,0), 1, cv2.LINE_AA
-                        )
-                        cv2.putText(
-                            output_img, 
-                            str(int(element["furthest_distance_to_center"])), 
-                            (element["x"], element["y"] + 15), 
-                            cv2.FONT_HERSHEY_SIMPLEX, 
-                            0.5, (0,0,190), 1, cv2.LINE_AA
-                        )
+                        # cv2.putText(
+                        #     output_img, 
+                        #     str(ring_id) + ":" + str(element_id), 
+                        #     (element["x"], element["y"] - 15), 
+                        #     cv2.FONT_HERSHEY_SIMPLEX, 
+                        #     0.5, (0,190,0), 1, cv2.LINE_AA
+                        # )
+                        # cv2.putText(
+                        #     output_img, 
+                        #     str(int(element["angle"])) + " deg", 
+                        #     (element["x"], element["y"]), 
+                        #     cv2.FONT_HERSHEY_SIMPLEX, 
+                        #     0.5, (190,0,0), 1, cv2.LINE_AA
+                        # )
+                        # cv2.putText(
+                        #     output_img, 
+                        #     str(int(element["furthest_distance_to_center"])), 
+                        #     (element["x"], element["y"] + 15), 
+                        #     cv2.FONT_HERSHEY_SIMPLEX, 
+                        #     0.5, (0,0,190), 1, cv2.LINE_AA
+                        # )
 
                 # Draw outline of center and orientation ring
-                cv2.drawContours(output_img, [features["center_circle"]], 0, (0, 0, 255), 2)
-                cv2.drawContours(output_img, [features["orientation_ring"]], 0, (0, 0, 255), 2)
-                cv2.drawContours(output_img, [features["orientation_dot"]["contour"]], 0, (0, 255, 0), 2)
+                cv2.drawContours(output_img, [features["center_circle"]], 0, (0, 0, 255), 1)
+                cv2.drawContours(output_img, [features["orientation_ring"]], 0, (0, 0, 255), 1)
+                cv2.drawContours(output_img, [features["orientation_dot"]["contour"]], 0, (0, 255, 0), 1)
             else:
-                print("Could not find outline of circle.")
+                print("Could not find center of circle.")
         else:
             print("Could not find fgc at all.")
-
-        raw_binary_string = ''.join([str(ch) for ch in features["data"]])
-        read_time = (time.time() - start_time)
-        show_image("Result of " + image_path, output_img)
         
+        read_time = (time.time() - start_time)
+
         try:
+            raw_binary_string = ''.join([str(ch) for ch in features["data"]])
+            show_image("Result of " + image_path, output_img)
+
             all_data_decoded = hamming_decode(features["data"])
             version = all_data_decoded[:4]
             text = all_data_decoded[4:]

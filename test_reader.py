@@ -9,8 +9,9 @@ def main():
         { "img": 'static/test_images/1.jpg', "content": "Level1" },
         { "img": 'static/test_images/2.jpg', "content": "Level2 which is harder" },
         { "img": 'static/test_images/3.jpg', "content": "Level3 which is super hard" },
-        { "img": 'static/test_images/4.jpg', "content": "Level1" },
-        { "img": 'static/test_images/5.jpg', "content": "Level2 which is harder" },
+        { "img": 'static/test_images/4.jpg', "content": "Meister der Galaxie." },
+        { "img": 'static/test_images/5.jpg', "content": "Such pretty colors!" },
+        { "img": 'static/test_images/6.jpg', "content": "Eine URL: https://google.com" },
     ]
     passed_cnt = 0
     failed_cnt = 0
