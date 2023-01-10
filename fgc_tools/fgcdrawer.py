@@ -126,7 +126,7 @@ class FGCDrawer:
         height = 50 + (len(all_data) / 4)
         drawing = svgwrite.Drawing(
             filename=output_file,
-            size=('100mm', '100mm'),
+            size=('200mm', '200mm'),
             viewBox=(
                 str(-width / 2)
                 + ","
