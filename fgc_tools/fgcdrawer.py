@@ -126,6 +126,7 @@ class FGCDrawer:
         height = 50 + (len(all_data) / 4)
         drawing = svgwrite.Drawing(
             filename=output_file,
+            size=('100mm', '100mm'),
             viewBox=(
                 str(-width / 2)
                 + ","
@@ -156,12 +157,12 @@ class FGCDrawer:
         # Draw inner circles for distance measurement and orientation
 
         # Center
-        groups[0].add(drawing.circle(center=(0, 0), r=FGCDrawer.STROKE_WIDTH * 2))
+        groups[0].add(drawing.circle(center=(0, 0), r=FGCDrawer.STROKE_WIDTH * 2, stroke="none"))
 
         # Orientation
         groups[0].add(
             drawing.circle(
-                center=(0, -FGCDrawer.CIRCLE_DISTANCE * 2), r=FGCDrawer.STROKE_WIDTH / 2
+                center=(0, -FGCDrawer.CIRCLE_DISTANCE * 2), r=FGCDrawer.STROKE_WIDTH / 2, stroke="none",
             )
         )
 
@@ -223,6 +224,7 @@ class FGCDrawer:
                 attributes = {}
                 if type(element) == svgwrite.shapes.Circle:
                     attributes["fill"] = color
+                    attributes["stroke"] = "none"
                 elif type(element) == svgwrite.path.Path:
                     attributes["stroke"] = color
                 element.update(attributes)
