@@ -61,7 +61,7 @@ class FGCReader():
         gray_img = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
         blurred_gray_img = cv2.medianBlur(gray_img, 7)
         _, binary_img = cv2.threshold(gray_img, 128, 255, cv2.THRESH_BINARY)
-        show_image("Binary of: " + image_path, binary_img)
+        # show_image("Binary of: " + image_path, binary_img)
         # hsv_img = cv2.cvtColor(img, cv2.COLOR_BGR2HSV)    # Not needed yet
 
         if find_circle_positions_with_hough_transform(blurred_gray_img, features):
@@ -126,7 +126,7 @@ class FGCReader():
 
         try:
             raw_binary_string = ''.join([str(ch) for ch in features["data"]])
-            show_image("Result of " + image_path, output_img)
+            # show_image("Result of " + image_path, output_img)
 
             all_data_decoded = hamming_decode(features["data"])
             version = all_data_decoded[:4]
