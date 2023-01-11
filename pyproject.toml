@@ -10,11 +10,11 @@ include = [
 
 [project]
 name = "fgc-tools"
-version = "0.0.6"
+version = "0.0.7"
 authors = [
   { name="Felix Mark", email="felix.mark@hotmail.com" },
 ]
-description = "Fancy Galaxy Code creator package."
+description = "Fancy Galaxy Code creator and reader package."
 readme = "README.md"
 license = { file="LICENSE" }
 requires-python = ">=3.7"
