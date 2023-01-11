@@ -10,15 +10,26 @@ from .libs.hamming import *
 
 class FGCReader():
 
-    def read_image(image_path) -> str:
+    def read_image(image_path=None, image_file=None) -> str:
+        np.seterr(invalid='ignore')
 
         # Run operations on img and draw on output_img
-        img = cv2.imread(image_path)
-        output_img = cv2.imread(image_path)
+        if image_path:
+            img = cv2.imread(image_path)
+            output_img = cv2.imread(image_path)
+        elif image_file:
+            image_path = "Memory"
+            img = cv2.imdecode(np.fromstring(image_file, np.uint8), 1)
+            output_img = cv2.imdecode(np.fromstring(image_file, np.uint8), 1)
+        else:
+            return ("", [], 0, "-", None, None)
 
         # Get image dimensions
         height = img.shape[0]
         width = img.shape[1]
+
+        print("Width:  ", width)
+        print("Height: ", height)
 
         # Resize images if they are too large
         max_w_h = 2500
@@ -104,10 +115,12 @@ class FGCReader():
                 cv2.drawContours(output_img, [features["center_circle"]], 0, (0, 0, 255), 1)
                 cv2.drawContours(output_img, [features["orientation_ring"]], 0, (0, 0, 255), 1)
                 cv2.drawContours(output_img, [features["orientation_dot"]["contour"]], 0, (0, 255, 0), 1)
+
+                print("Processed FGC successfully.")
             else:
                 print("Could not find center of circle.")
         else:
-            print("Could not find fgc at all.")
+            print("Could not find FGC at all.")
         
         read_time = (time.time() - start_time)
 
@@ -128,6 +141,6 @@ class FGCReader():
             while (str_data[-1] == "\0"):
                 str_data = str_data[:-1]
 
-            return (str_data, version, read_time, raw_binary_string)
+            return (str_data, version, read_time, raw_binary_string, output_img, binary_img)
         except:
-            return ("", [], read_time, "-")
+            return ("", [], read_time, "-", output_img, binary_img)

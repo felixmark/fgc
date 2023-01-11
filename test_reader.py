@@ -21,7 +21,7 @@ def main():
         print("="*60)
         print("Test image: %s" % test_image["img"])
         print("-"*60)
-        str_data, version, read_time, raw_binary_string = FGCReader.read_image(test_image["img"])
+        str_data, version, read_time, raw_binary_string, output_image, binary_img = FGCReader.read_image(test_image["img"])
         print("-"*60)
         print("RAW Read:   %s" % raw_binary_string)
         print("Version:    %s" % str(version))

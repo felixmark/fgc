@@ -65,6 +65,9 @@ def find_center_with_contours(img_binary, img_original, features) -> bool:
 
     # Store all possible elements of the fgc in this list
     possible_fgc_elements = []
+    rejected_too_few_sides_cnt = 0
+    rejected_too_many_sides_cnt = 0
+    rejected_too_small_cnt = 0
 
     for contour in contours[1:]:
         approx = cv2.approxPolyDP(contour, 0.01 * cv2.arcLength(contour, True), True)
@@ -82,7 +85,7 @@ def find_center_with_contours(img_binary, img_original, features) -> bool:
         bounding_rect_size = width * height
 
         # Only consider elements with a certain amount of contour sides and a minimum size.
-        if contour_sides > 6 and contour_sides < 22 and bounding_rect_size >= 100:
+        if contour_sides >= 5 and contour_sides <= 22 and bounding_rect_size >= 50:
             box = cv2.boxPoints(bounding_rect)
             box = np.int0(box)
             
@@ -91,6 +94,19 @@ def find_center_with_contours(img_binary, img_original, features) -> bool:
             possible_fgc_elements.append(
                 {"contour": contour, "x": x, "y": y, "bounding_rect": bounding_rect, "sides": contour_sides, "color": color}
             )
+        else:
+            if contour_sides < 6:
+                rejected_too_few_sides_cnt += 1
+            elif contour_sides > 22:
+                rejected_too_many_sides_cnt += 1
+            elif bounding_rect_size < 100:
+                rejected_too_small_cnt += 1
+
+    print(f"Rejected {rejected_too_few_sides_cnt + rejected_too_many_sides_cnt + rejected_too_small_cnt} of {len(contours[1:])} contours.")
+    print(f"Too few sides:  {rejected_too_few_sides_cnt} contours.")
+    print(f"Too many sides: {rejected_too_many_sides_cnt} contours.")
+    print(f"Too small:      {rejected_too_small_cnt} contours.")
+
     # Store possible fgc elements in features
     features["possible_fgc_elements"] = possible_fgc_elements
 
@@ -234,10 +250,13 @@ def sanitize_data(features) -> None:
             index += 1
 
 def get_all_angles(features) -> None:
+    """Get angles of all shapes regarding to the orientation dot."""
+
     vector_from_center_to_orientation_point = [
         features["orientation_dot"]["x"] - features["center_coordinates"][0],
         features["orientation_dot"]["y"] - features["center_coordinates"][1],
     ]
+
     for element in features["possible_fgc_elements"]:
         vector_from_center_to_element = [
             element["x"] - features["center_coordinates"][0],
@@ -273,7 +292,7 @@ def divide_elements_into_rings_by_angle_and_distance(features):
     for element in features["possible_fgc_elements"]:
 
         # Increase ring if there is a jump in distance to center
-        if abs(current_distance - element["furthest_distance_to_center"]) >= features["orientation_dot"]["distance_to_center"] * 0.3:
+        if abs(current_distance - element["furthest_distance_to_center"]) >= features["orientation_dot"]["distance_to_center"] * 0.2:
             current_ring += 1
         
         # Append new ring to rings if necessary and append current contour element
@@ -316,6 +335,8 @@ def get_data_from_rings(features):
     features["data_rings"] = []
     features["data"] = []
 
+    print("Getting data...")
+
     for ring_id, ring in enumerate(features["rings"]):
 
         # Skip first two "rings" because they are the center circle and the orientation ring+dot
@@ -349,13 +370,15 @@ def get_data_from_rings(features):
                 int(features["center_coordinates"][0] + rotated_vector[0]), 
                 int(features["center_coordinates"][1] + rotated_vector[1])
             ]
-            features["target_positions"].append(target_position)
 
             # Check all contours if they contain the calculated position
             found_contour = False
+            closest_contour = None
+            total_closest_point_distance = None
             for element in ring:
                 is_point_in_contour = cv2.pointPolygonTest(element["contour"], (target_position[0], target_position[1]), False)
                 if is_point_in_contour == 1:
+                    # If target position lies within this contour, this is the one we are looking for
                     if pos > 0:
                         if current_contour_angle is not None and current_contour_angle != element["angle"]:
                             currently_zero = not currently_zero
@@ -369,10 +392,37 @@ def get_data_from_rings(features):
                     found_contour = True
                     current_contour_angle = element["angle"]
                     break
+                else:
+                    # If target position lies outside contour, keep track of the distance to this contour
+                    closest_point_distance_in_contour = None
+                    for point in element["contour"]:
+                        distance = calculate_distance(target_position, point[0])
+                        if closest_point_distance_in_contour is None or distance < closest_point_distance_in_contour:
+                            closest_point_distance_in_contour = distance
+
+                    if total_closest_point_distance is None or closest_point_distance_in_contour < total_closest_point_distance:
+                        total_closest_point_distance = closest_point_distance_in_contour
+                        closest_contour = element
 
             if not found_contour:
-                break
-        
+                # If contour was not found yet, check the closest distance to a contour and decide if it should have been inside
+                if closest_contour is None or total_closest_point_distance > features["orientation_dot"]["distance_to_center"] * 0.2:
+                    break
+                else:
+                    if pos > 0:
+                        if current_contour_angle is not None and current_contour_angle != closest_contour["angle"]:
+                            currently_zero = not currently_zero
+                        if currently_zero:
+                            data_ring.append(0)
+                            data.append(0)
+                        else:
+                            data_ring.append(1)
+                            data.append(1)
+
+                    current_contour_angle = closest_contour["angle"]
+
+            features["target_positions"].append(target_position)
+
         data_rings.append(data_ring)
 
     features["data_rings"] = data_rings
