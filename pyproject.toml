@@ -10,7 +10,7 @@ include = [
 
 [project]
 name = "fgc-tools"
-version = "0.0.8"
+version = "0.0.9"
 authors = [
   { name="Felix Mark", email="felix.mark@hotmail.com" },
 ]
