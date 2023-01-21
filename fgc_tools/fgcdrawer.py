@@ -31,10 +31,6 @@ class FGCDrawer:
         # Add a new group, where bits will be drawn
         groups.append(drawing.g(id=str(ring_number)))
 
-        # Check if this one is the last ring and add the orientation bit. (Hopefully will be deprecated when decoding works either way)
-        if len(unprocessed_data) == 0 and len(my_data) <= number_of_bits_in_ring:
-            my_data.append(not my_data[-1])
-
         print("-" * 80)
         print("Ring #%i" % ring_number)
         print("-" * 80)

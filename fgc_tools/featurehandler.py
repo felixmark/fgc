@@ -54,8 +54,7 @@ def get_color_for_contour(img, contour):
     col_mean = cv2.mean(img,mask)
     return (col_mean[0] + col_mean[1] + col_mean[2]) // 3
 
-
-def find_center_with_contours(img_binary, img_original, features) -> bool:
+def find_center_with_contours(img_binary, img_original, output_img, features) -> bool:
     """Funky function to determine the center of the fgc.
     It tries to find a point in the image, where two overlapping contours are as close as possible to a hough transform found circle."""
 
@@ -70,6 +69,7 @@ def find_center_with_contours(img_binary, img_original, features) -> bool:
     rejected_too_small_cnt = 0
 
     for contour in contours[1:]:
+        cv2.drawContours(output_img, [contour], 0, (255,0,0), 1)
         approx = cv2.approxPolyDP(contour, 0.01 * cv2.arcLength(contour, True), True)
         
         # finding center point of shape
@@ -85,7 +85,7 @@ def find_center_with_contours(img_binary, img_original, features) -> bool:
         bounding_rect_size = width * height
 
         # Only consider elements with a certain amount of contour sides and a minimum size.
-        if contour_sides >= 5 and contour_sides <= 22 and bounding_rect_size >= 50:
+        if contour_sides >= 6 and contour_sides <= 20 and bounding_rect_size >= 80:
             box = cv2.boxPoints(bounding_rect)
             box = np.int0(box)
             
@@ -97,9 +97,9 @@ def find_center_with_contours(img_binary, img_original, features) -> bool:
         else:
             if contour_sides < 6:
                 rejected_too_few_sides_cnt += 1
-            elif contour_sides > 22:
+            elif contour_sides > 20:
                 rejected_too_many_sides_cnt += 1
-            elif bounding_rect_size < 100:
+            elif bounding_rect_size < 80:
                 rejected_too_small_cnt += 1
 
     print(f"Rejected {rejected_too_few_sides_cnt + rejected_too_many_sides_cnt + rejected_too_small_cnt} of {len(contours[1:])} contours.")
@@ -167,7 +167,7 @@ def find_center_with_contours(img_binary, img_original, features) -> bool:
         pair_offset_score = circle_pair["pair_offset"]
         closeness_to_hough_circle_score = circle_pair["closeness_to_hough_circle"] * 3
         side_score = circle_pair["total_sides"]
-        color_score = circle_pair["total_color"] * 50
+        color_score = circle_pair["total_color"] * 200
         score = pair_offset_score + closeness_to_hough_circle_score + side_score + color_score
         if best_score is None or score < best_score:
             best_score = score
@@ -335,7 +335,7 @@ def get_data_from_rings(features):
     features["data_rings"] = []
     features["data"] = []
 
-    print("Getting data...")
+    print(f"Getting data of { len(features['rings']) } rings...")
 
     for ring_id, ring in enumerate(features["rings"]):
 
