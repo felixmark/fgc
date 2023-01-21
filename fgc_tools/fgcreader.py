@@ -131,7 +131,8 @@ class FGCReader():
             str_data = byte_seq.decode('utf-8', 'ignore')
 
             # Strip last 0 away
-            str_data = str_data[:-1]
+            if str_data[-1] == 0:
+                str_data = str_data[:-1]
 
             return (str_data, version, read_time, raw_binary_string, output_img, binary_img)
         except Exception as ex:
