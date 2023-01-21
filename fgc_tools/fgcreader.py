@@ -127,11 +127,11 @@ class FGCReader():
             text = all_data_decoded[4:]
             binary_string = ''.join([str(ch) for ch in text])
 
-            byte_seq = bytes(int(binary_string[i:i+8], 2) for i in range(0, len(binary_string), 8))
-            str_data = byte_seq.decode('utf-8', 'ignore')
-
-            # Strip last 0 away
-            if str_data[-1] == 0:
+            str_data = "".join([chr(int(x,2)) for x in [
+                binary_string[i:i+8] for i in range(0,len(binary_string), 8)
+            ]])
+            # Strip all 0s away
+            while (str_data[-1] == "\0"):
                 str_data = str_data[:-1]
 
             return (str_data, version, read_time, raw_binary_string, output_img, binary_img)
