@@ -1,6 +1,6 @@
 from .fgcdrawer import FGCDrawer
 from bitarray import bitarray
-from .libs.hamming import *
+from .libs.hamming_2 import *
 from .libs.binarytools import *
 
 

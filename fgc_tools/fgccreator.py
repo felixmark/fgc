@@ -46,11 +46,6 @@ class FGCCreator:
         print("Hamming decoded data (check):")
         print_bitarray(all_data_decoded)
 
-        print("=" * 80)
-        print("Error correction bits added (final data):")
-        print_bitarray(all_data_encoded)
-        print("=" * 80)
-
         # Draw the actual simple vector graphic (svg)
         FGCDrawer.draw_fgc(
             data, 

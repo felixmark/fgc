@@ -28,7 +28,7 @@ def parity_index(bits):
     bit_index = 2
     parity_location = [0]
 
-    while bit_index <= len(bits):
+    while bit_index < len(bits) - len(bits) % 8:
         parity_location.append(bit_index - 1)
         bit_index = bit_index * 2
     return parity_location
