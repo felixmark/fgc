@@ -123,49 +123,32 @@ class FGCReader():
 
         try:
             raw_binary_string = ''.join([str(ch) for ch in features["data"]])
-            raw_binary_string = raw_binary_string.strip()
-            print("RAW binary string:", raw_binary_string)
-
             raw_binary_bitarray = bitarray(raw_binary_string)
             str_data = raw_binary_bitarray.to01()
+            print("RAW binary:    ", str_data)
             str_data = [int(bit) for bit in str_data]
             all_data_decoded = bitarray(hamming_decode(str_data))
-            print("DECODED binary string:", raw_binary_string)
+            print("DECODED binary:", all_data_decoded.to01())
 
             version = all_data_decoded[:4].to01()
             text = all_data_decoded[4:].to01()
+            print("Version:       ", version)
+            print("Text:          ", text)
 
-            output = []
-            skip_bytes = 0
+            output_bytes = []
             # iterate over the binary string in chunks of 8 bits
             for i in range(0, len(text), 8):
-                if skip_bytes > 0:
-                    skip_bytes -= 1
-                    continue
-
-                # convert 8 bits to an integer
-                int_data = int(text[i:i+8], 2)
-                # pack the integer as a utf-32-be encoded bytes object
-                bytes_object = struct.pack('>I', int_data)
-                # convert the bytes object to a utf-32-be encoded string
-                str_data = bytes_object.decode('utf-32-be')
-
-                if int_data == 0:
-                    print("FOUND UTF-32 CHARACTER!")
-                    int_data = int(text[i:i+32], 2)
-                    bytes_object = struct.pack('>I', int_data)
-                    str_data = bytes_object.decode('utf-32-be')
-                    skip_bytes = 3
-
-                output.append(str_data)
-            text = str("".join(output))
-
+                int_byte = int(text[i:i+8], 2)
+                output_bytes.append(int_byte.to_bytes(1, byteorder='big'))
+            print("Bytes Text:    ", output_bytes)
+            utf8_text = b''.join(output_bytes).decode("utf-8")
+            print("UTF-8 Text:    ", utf8_text)
 
             # Strip all 0s away
-            while (text[-1] == "\0"):
-                text = text[:-1]
+            while (utf8_text[-1] == "\0"):
+                utf8_text = utf8_text[:-1]
 
-            return (text, version, read_time, raw_binary_string, output_img, binary_img)
+            return (utf8_text, version, read_time, raw_binary_string, output_img, binary_img)
         except Exception as ex:
             print(ex)
             print(traceback.format_exc())

@@ -24,7 +24,8 @@ class FGCCreator:
         # Convert version and data to bitarray
         version_bits = byte_to_bitarray(FGCCreator.VERSION, FGCCreator.VERSION_BITS)
         all_data.extend(version_bits)
-        data_bits = string_to_bitarray(data)
+        data_bits2 = ''.join(format(i, '08b') for i in bytearray(data, encoding='utf-8'))
+        data_bits = bitarray(data_bits2)
         all_data.extend(data_bits)
 
         print("=" * 80)
