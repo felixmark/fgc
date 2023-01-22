@@ -59,7 +59,7 @@ class FGCReader():
         output_img = img.copy()
         gray_img = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
         blurred_gray_img = cv2.medianBlur(gray_img, 7)
-        _, binary_img = cv2.threshold(gray_img, 128, 255, cv2.THRESH_BINARY)
+        _, binary_img = cv2.threshold(gray_img, 140, 255, cv2.THRESH_BINARY)
 
         if find_circle_positions_with_hough_transform(blurred_gray_img, features):
             if find_center_with_contours(binary_img, img, output_img, features):
