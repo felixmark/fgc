@@ -15,6 +15,7 @@ def main():
         { "img": 'static/test_images/6.jpg', "content": "Eine URL: https://google.com" },
         { "img": 'static/test_images/7.jpg', "content": "🥐" },
         { "img": 'static/test_images/8.jpg', "content": "Tasse." },
+        { "img": 'static/test_images/9.jpg', "content": "github.com/felixmark/fgc" },
     ]
     passed_cnt = 0
     failed_cnt = 0
@@ -26,7 +27,7 @@ def main():
         print("-"*60)
         str_data, version, read_time, raw_binary_string, output_image, binary_img = FGCReader.read_image(test_image["img"])
         show_image("Output of: " + test_image["img"], output_image)
-        # show_image("Binary of: " +  test_image["img"], binary_img)
+        show_image("Binary of: " +  test_image["img"], binary_img)
 
         print("-"*60)
         print("RAW Read:   %s" % raw_binary_string)

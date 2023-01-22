@@ -5,7 +5,6 @@ from bitarray import bitarray
 from .cvfunctions import *
 from .featurehandler import *
 from .libs.hamming import *
-from .libs.hamming_2 import decode_data
 import struct
 import traceback
 
@@ -59,7 +58,7 @@ class FGCReader():
         # Calculate some alternative representations of the input image
         output_img = img.copy()
         gray_img = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
-        blurred_gray_img = cv2.medianBlur(gray_img, 3)
+        blurred_gray_img = cv2.medianBlur(gray_img, 7)
         _, binary_img = cv2.threshold(gray_img, 128, 255, cv2.THRESH_BINARY)
 
         if find_circle_positions_with_hough_transform(blurred_gray_img, features):
