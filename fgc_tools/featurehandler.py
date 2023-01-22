@@ -85,7 +85,7 @@ def find_center_with_contours(img_binary, img_original, output_img, features) ->
         bounding_rect_size = width * height
 
         # Only consider elements with a certain amount of contour sides and a minimum size.
-        if contour_sides >= 6 and contour_sides <= 20 and bounding_rect_size >= 80:
+        if contour_sides >= 6 and contour_sides <= 20 and bounding_rect_size >= 75:
             box = cv2.boxPoints(bounding_rect)
             box = np.int0(box)
             
@@ -95,11 +95,11 @@ def find_center_with_contours(img_binary, img_original, output_img, features) ->
                 {"contour": contour, "x": x, "y": y, "bounding_rect": bounding_rect, "sides": contour_sides, "color": color}
             )
         else:
-            if contour_sides < 6:
+            if contour_sides < 5:
                 rejected_too_few_sides_cnt += 1
-            elif contour_sides > 20:
+            elif contour_sides > 22:
                 rejected_too_many_sides_cnt += 1
-            elif bounding_rect_size < 80:
+            elif bounding_rect_size < 50:
                 rejected_too_small_cnt += 1
 
     print(f"Rejected {rejected_too_few_sides_cnt + rejected_too_many_sides_cnt + rejected_too_small_cnt} of {len(contours[1:])} contours.")
@@ -167,7 +167,7 @@ def find_center_with_contours(img_binary, img_original, output_img, features) ->
         pair_offset_score = circle_pair["pair_offset"]
         closeness_to_hough_circle_score = circle_pair["closeness_to_hough_circle"] * 3
         side_score = circle_pair["total_sides"]
-        color_score = circle_pair["total_color"] * 200
+        color_score = circle_pair["total_color"] * 50
         score = pair_offset_score + closeness_to_hough_circle_score + side_score + color_score
         if best_score is None or score < best_score:
             best_score = score

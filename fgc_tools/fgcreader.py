@@ -7,6 +7,7 @@ from .featurehandler import *
 from .libs.hamming import *
 from .libs.hamming_2 import decode_data
 import struct
+import traceback
 
 
 # Currently used fgc reader
@@ -59,7 +60,7 @@ class FGCReader():
         output_img = img.copy()
         gray_img = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
         blurred_gray_img = cv2.medianBlur(gray_img, 3)
-        _, binary_img = cv2.threshold(gray_img, 150, 255, cv2.THRESH_BINARY)
+        _, binary_img = cv2.threshold(gray_img, 128, 255, cv2.THRESH_BINARY)
 
         if find_circle_positions_with_hough_transform(blurred_gray_img, features):
             if find_center_with_contours(binary_img, img, output_img, features):
@@ -168,4 +169,5 @@ class FGCReader():
             return (text, version, read_time, raw_binary_string, output_img, binary_img)
         except Exception as ex:
             print(ex)
+            print(traceback.format_exc())
             return ("", [], read_time, "-", output_img, binary_img)

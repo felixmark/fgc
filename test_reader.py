@@ -14,6 +14,7 @@ def main():
         { "img": 'static/test_images/5.jpg', "content": "Such pretty colors!" },
         { "img": 'static/test_images/6.jpg', "content": "Eine URL: https://google.com" },
         { "img": 'static/test_images/7.jpg', "content": "🥐" },
+        { "img": 'static/test_images/8.jpg', "content": "Tasse." },
     ]
     passed_cnt = 0
     failed_cnt = 0
