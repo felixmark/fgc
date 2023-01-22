@@ -209,10 +209,13 @@ def find_orientation_dot(features) -> None:
     _x2,_y2,w2,h2 = cv2.boundingRect(features["center_circle"])
     possible_orientation_dot_area = w * h
     center_circle_area = w2 * h2
+
+    possible_orientation_dot_index = 2
     while (possible_orientation_dot_area >= center_circle_area):
-        features["possible_fgc_elements"].pop(2)
+        possible_orientation_dot_index += 1
+        print("Removing possible_orientation_dot_area.")
         if len(features["possible_fgc_elements"]) > 2:
-            possible_orientation_dot = features["possible_fgc_elements"][2]
+            possible_orientation_dot = features["possible_fgc_elements"][possible_orientation_dot_index]
             _x,_y,w,h = cv2.boundingRect(possible_orientation_dot["contour"])
             possible_orientation_dot_area = w * h
         else:
@@ -222,6 +225,8 @@ def find_orientation_dot(features) -> None:
 
 def sanitize_data(features) -> None:
     """Try to get rid of all contours outside of the fgc by setting a max jump distance between contour distances to the center."""
+
+    print("Sanitizing data...")
 
     # Add furthest_distance_to_center entry to all contours
     for element in features["possible_fgc_elements"]:
@@ -338,6 +343,8 @@ def get_data_from_rings(features):
     print(f"Getting data of { len(features['rings']) } rings...")
 
     for ring_id, ring in enumerate(features["rings"]):
+        
+        print(f"Ring #{ring_id} - Features:{len(features['rings'][ring_id])}")
 
         # Skip first two "rings" because they are the center circle and the orientation ring+dot
         if ring_id < 2:

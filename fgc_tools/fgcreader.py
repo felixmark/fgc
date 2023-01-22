@@ -1,9 +1,12 @@
 import numpy as np
 import cv2
 import time
+from bitarray import bitarray
 from .cvfunctions import *
 from .featurehandler import *
 from .libs.hamming import *
+from .libs.hamming_2 import decode_data
+import struct
 
 
 # Currently used fgc reader
@@ -120,21 +123,49 @@ class FGCReader():
 
         try:
             raw_binary_string = ''.join([str(ch) for ch in features["data"]])
-            # show_image("Result of " + image_path, output_img)
+            raw_binary_string = raw_binary_string.strip()
+            print("RAW binary string:", raw_binary_string)
 
-            all_data_decoded = hamming_decode(features["data"])
-            version = all_data_decoded[:4]
-            text = all_data_decoded[4:]
-            binary_string = ''.join([str(ch) for ch in text])
+            raw_binary_bitarray = bitarray(raw_binary_string)
+            str_data = raw_binary_bitarray.to01()
+            str_data = [int(bit) for bit in str_data]
+            all_data_decoded = bitarray(hamming_decode(str_data))
+            print("DECODED binary string:", raw_binary_string)
 
-            str_data = "".join([chr(int(x,2)) for x in [
-                binary_string[i:i+8] for i in range(0,len(binary_string), 8)
-            ]])
+            version = all_data_decoded[:4].to01()
+            text = all_data_decoded[4:].to01()
+
+            output = []
+            skip_bytes = 0
+            # iterate over the binary string in chunks of 8 bits
+            for i in range(0, len(text), 8):
+                if skip_bytes > 0:
+                    skip_bytes -= 1
+                    continue
+
+                # convert 8 bits to an integer
+                int_data = int(text[i:i+8], 2)
+                # pack the integer as a utf-32-be encoded bytes object
+                bytes_object = struct.pack('>I', int_data)
+                # convert the bytes object to a utf-32-be encoded string
+                str_data = bytes_object.decode('utf-32-be')
+
+                if int_data == 0:
+                    print("FOUND UTF-32 CHARACTER!")
+                    int_data = int(text[i:i+32], 2)
+                    bytes_object = struct.pack('>I', int_data)
+                    str_data = bytes_object.decode('utf-32-be')
+                    skip_bytes = 3
+
+                output.append(str_data)
+            text = str("".join(output))
+
+
             # Strip all 0s away
-            while (str_data[-1] == "\0"):
-                str_data = str_data[:-1]
+            while (text[-1] == "\0"):
+                text = text[:-1]
 
-            return (str_data, version, read_time, raw_binary_string, output_img, binary_img)
+            return (text, version, read_time, raw_binary_string, output_img, binary_img)
         except Exception as ex:
             print(ex)
             return ("", [], read_time, "-", output_img, binary_img)

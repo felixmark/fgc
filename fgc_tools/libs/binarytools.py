@@ -22,7 +22,9 @@ def version_to_bitarray(string):
 def string_to_bitarray(string):
     bit_array: bitarray = bitarray()
     for c in string:
-        bit_array.extend(byte_to_bitarray(c, 8))
+        print("CHARACTER:", c)
+        length_in_bits = 8 * ((int(ord(c)) // 32766) + 1)
+        bit_array.extend(byte_to_bitarray(c, length_in_bits))
     return bit_array
 
 
