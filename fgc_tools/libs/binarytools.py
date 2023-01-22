@@ -13,6 +13,11 @@ def print_bitarray(bit_array, end="\n"):
             print("", end=" ")
     print("", end=end)
 
+def version_to_bitarray(string):
+    bit_array: bitarray = bitarray()
+    for c in string:
+        bit_array.extend(byte_to_bitarray(c, 4))
+    return bit_array
 
 def string_to_bitarray(string):
     bit_array: bitarray = bitarray()
