@@ -3,7 +3,7 @@ import cv2
 import time
 from .cvfunctions import *
 from .featurehandler import *
-from .libs.hamming_2 import *
+from .libs.hamming import *
 
 
 # Currently used fgc reader
