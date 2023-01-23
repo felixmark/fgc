@@ -2,6 +2,7 @@ from .fgcdrawer import FGCDrawer
 from bitarray import bitarray
 from .libs.hamming import *
 from .libs.binarytools import *
+from .libs.commonfunctions import CommonFunctions
 
 
 class FGCCreator:
@@ -17,9 +18,9 @@ class FGCCreator:
         """Creates an fgc according to the given parameters."""
         all_data: bitarray = bitarray()
 
-        print("=" * 80)
-        print("Version: %i" % FGCCreator.VERSION)
-        print("Data:    %s" % data)
+        CommonFunctions.print_seperation_line("=")
+        print("Version:  %i" % FGCCreator.VERSION)
+        print("Data:     %s" % data)
 
         # Convert version and data to bitarray
         version_bits = byte_to_bitarray(FGCCreator.VERSION, FGCCreator.VERSION_BITS)
@@ -28,8 +29,7 @@ class FGCCreator:
         data_bits = bitarray(data_bits2)
         all_data.extend(data_bits)
 
-        print("=" * 80)
-        print("Raw data:")
+        print("Binary:   ", end="")
         print_bitarray(all_data)
 
         # Add Hamming error correction bits
@@ -37,15 +37,17 @@ class FGCCreator:
         str_data = [int(bit) for bit in str_data]
         all_data_encoded = bitarray(hamming_code(str_data))
 
-        print("Hamming encoded data:")
+        print("Hamming:  ", end="")
         print_bitarray(all_data_encoded)
 
         str_data = all_data_encoded.to01()
         str_data = [int(bit) for bit in str_data]
         all_data_decoded = bitarray(hamming_decode(str_data))
 
-        print("Hamming decoded data (check):")
-        print_bitarray(all_data_decoded)
+        sanity_check = (all_data_decoded == all_data)
+        print(f"Sanity:   {'PASSED' if sanity_check else 'FAILED! PLEASE CHECK INPUT AND HAMMING CODE.'}.")
+
+        CommonFunctions.print_seperation_line("=")
 
         # Draw the actual simple vector graphic (svg)
         FGCDrawer.draw_fgc(

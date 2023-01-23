@@ -1,7 +1,7 @@
-from .fgcdrawer import FGCDrawer
+from ..fgc_tools.fgcdrawer import FGCDrawer
 from bitarray import bitarray
-from .libs.hamming_2 import *
-from .libs.binarytools import *
+from ..fgc_tools.libs.hamming_2 import *
+from ..fgc_tools.libs.binarytools import *
 
 
 class FGCCreator:

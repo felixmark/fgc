@@ -4,7 +4,7 @@ import svgwrite
 import os
 from .libs.binarytools import print_bitarray
 from colour import Color
-from .commonfunctions import CommonFunctions
+from .libs.commonfunctions import CommonFunctions
 
 
 class FGCDrawer:
@@ -31,10 +31,10 @@ class FGCDrawer:
         # Add a new group, where bits will be drawn
         groups.append(drawing.g(id=str(ring_number)))
 
-        print("-" * 80)
+        print()
         print("Ring #%i" % ring_number)
-        print("-" * 80)
-        print("Data:")
+        CommonFunctions.print_seperation_line("-")
+        print("Data:             ", end="")
         print_bitarray(my_data)
         print("Degrees per bit:  %i" % degrees_per_bit)
 
@@ -65,6 +65,7 @@ class FGCDrawer:
         print("Bit capacity:     %i" % number_of_bits_in_ring)
         print("Processed bits:   %i" % len(my_data))
         print("Unprocessed bits: %i" % len(unprocessed_data))
+        print()
 
         # Return all the unprocessed data
         return unprocessed_data
@@ -90,17 +91,10 @@ class FGCDrawer:
 
         d = " ".join(
             [
-                "M",
-                str(start_x),
-                str(start_y),
-                "A",
-                str(radius),
-                str(radius),
-                "0",
-                largeArcFlag,
-                "0",
-                str(end_x),
-                str(end_y),
+                "M", str(start_x), str(start_y),
+                "A", str(radius), str(radius),
+                "0", largeArcFlag,
+                "0", str(end_x), str(end_y),
             ]
         )
         shape.add(
@@ -207,10 +201,6 @@ class FGCDrawer:
 
         # Apply color to the groups (rings) 
         colors = list(color_inner.range_to(color_outer, len(groups) - 1))
-        print("=" * 80)
-        print("Color back:  %s" % color_background)
-        print("Color inner: %s" % color_inner)
-        print("Color outer: %s" % color_outer)
         for i, group in enumerate(groups):
             if i == 0:
                 color = "black"
@@ -228,7 +218,7 @@ class FGCDrawer:
             drawing.add(group)
 
         # Save drawing to svg file
-        print("=" * 80)
+        CommonFunctions.print_seperation_line("=")
         print("Saving svg file...")
         drawing.save()
         print("Done.")

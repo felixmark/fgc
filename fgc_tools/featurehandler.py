@@ -1,7 +1,7 @@
 import cv2
 import math
 import numpy as np
-from .commonfunctions import CommonFunctions
+from .libs.commonfunctions import CommonFunctions
 
 def image_resize(image, width = None, height = None, inter = cv2.INTER_AREA):
     dim = None
@@ -85,7 +85,7 @@ def find_center_with_contours(img_binary, img_original, output_img, features) ->
         bounding_rect_size = width * height
 
         # Only consider elements with a certain amount of contour sides and a minimum size.
-        if contour_sides >= 6 and contour_sides <= 20 and bounding_rect_size >= 75:
+        if contour_sides >= 5 and contour_sides <= 25 and bounding_rect_size >= 50:
             box = cv2.boxPoints(bounding_rect)
             box = np.int0(box)
             
@@ -97,9 +97,9 @@ def find_center_with_contours(img_binary, img_original, output_img, features) ->
         else:
             if contour_sides < 5:
                 rejected_too_few_sides_cnt += 1
-            elif contour_sides > 22:
+            elif contour_sides > 25:
                 rejected_too_many_sides_cnt += 1
-            elif bounding_rect_size < 50:
+            elif bounding_rect_size < 10:
                 rejected_too_small_cnt += 1
 
     print(f"Rejected {rejected_too_few_sides_cnt + rejected_too_many_sides_cnt + rejected_too_small_cnt} of {len(contours[1:])} contours.")

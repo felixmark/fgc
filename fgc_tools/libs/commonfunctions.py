@@ -7,3 +7,7 @@ class CommonFunctions():
         if ring_number <= len(CommonConstants.DEGREES_PER_BIT):
             return CommonConstants.DEGREES_PER_BIT[ring_number-1]
         return 3
+
+    @staticmethod
+    def print_seperation_line(character):
+        print(character * 80)

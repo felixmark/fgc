@@ -5,8 +5,8 @@ import matplotlib.pyplot as plt
 import seaborn as sns
 import scipy
 from cvfunctions import *
-from commonfunctions import CommonFunctions
-from commonconstants import CommonConstants
+from ..fgc_tools.libs.commonfunctions import CommonFunctions
+from ..fgc_tools.libs.commonconstants import CommonConstants
 
 
 
