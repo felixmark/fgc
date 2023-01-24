@@ -58,11 +58,13 @@ class FGCReader():
         # Calculate some alternative representations of the input image
         output_img = img.copy()
         gray_img = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
-        blurred_gray_img = cv2.medianBlur(gray_img, 7)
-        _, binary_img = cv2.threshold(gray_img, 150, 255, cv2.THRESH_BINARY)
+        blurred_gray_img = cv2.medianBlur(gray_img, 5)
+        heavy_blurred_gray_img = cv2.medianBlur(gray_img, 11)
+        edged = cv2.Canny(blurred_gray_img, 100, 200)
+        # _, binary_img = cv2.threshold(gray_img, 150, 255, cv2.THRESH_BINARY)
 
-        if find_circle_positions_with_hough_transform(blurred_gray_img, features):
-            if find_center_with_contours(binary_img, img, output_img, features):
+        if find_circle_positions_with_hough_transform(heavy_blurred_gray_img, features):
+            if find_center_with_contours(edged, img, output_img, features):
 
                 # Now that we've found the center circle of the fgc, do some more examination of the data and contours
                 find_orientation_dot(features)
@@ -84,7 +86,8 @@ class FGCReader():
                         outline_color = (255,255,0)
                         if ring_id % 2:
                             outline_color = (0,255,255)
-                        cv2.drawContours(output_img, [element["contour"]], 0, outline_color, 1)
+                        if ring_id > 1:
+                            cv2.drawContours(output_img, [element["contour"]], 0, outline_color, 1)
 
                         # cv2.putText(
                         #     output_img, 
@@ -109,9 +112,9 @@ class FGCReader():
                         # )
 
                 # Draw outline of center and orientation ring
-                cv2.drawContours(output_img, [features["center_circle"]], 0, (0, 0, 255), 1)
-                cv2.drawContours(output_img, [features["orientation_ring"]], 0, (0, 0, 255), 1)
-                cv2.drawContours(output_img, [features["orientation_dot"]["contour"]], 0, (0, 255, 0), 1)
+                cv2.drawContours(output_img, [features["center_circle"]], 0, (0, 255, 0), 2)
+                cv2.drawContours(output_img, [features["orientation_dot"]["contour"]], 0, (255, 0, 0), 2)
+                cv2.drawContours(output_img, [features["orientation_ring"]], 0, (0, 200, 0), 2)
 
                 print("Processed FGC successfully.")
             else:
@@ -148,8 +151,8 @@ class FGCReader():
             while (utf8_text[-1] == "\0"):
                 utf8_text = utf8_text[:-1]
 
-            return (utf8_text, version, read_time, raw_binary_string, output_img, binary_img)
+            return (utf8_text, version, read_time, raw_binary_string, output_img, edged)
         except Exception as ex:
             print(ex)
             print(traceback.format_exc())
-            return ("", [], read_time, "-", output_img, binary_img)
+            return ("", [], read_time, "-", output_img, edged)

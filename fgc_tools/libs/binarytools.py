@@ -7,7 +7,7 @@ def print_bitarray(bit_array, end="\n"):
     for bit in bit_array:
         current_bit += 1
         print("%i" % (1 if bit else 0), end="")
-        if current_bit % 60 == 0:
+        if current_bit % bits_per_line == 0:
             print()
         elif current_bit % 4 == 0:
             print("", end=" ")
@@ -26,7 +26,6 @@ def string_to_bitarray(string):
         length_in_bits = 8 * ((int(ord(c)) // 32766) + 1)
         bit_array.extend(byte_to_bitarray(c, length_in_bits))
     return bit_array
-
 
 def byte_to_bitarray(data, lenght_in_bits):
     bit_array: bitarray = bitarray()

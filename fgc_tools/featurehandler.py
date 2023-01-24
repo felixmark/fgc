@@ -19,13 +19,12 @@ def image_resize(image, width = None, height = None, inter = cv2.INTER_AREA):
 
 def find_circle_positions_with_hough_transform(img, features) -> bool:
     # Hough transform parameters
-    minDist = 100
+    minDist = 10
     param1 = 80
     param2 = 60
     minRadius = 5
     maxRadius = 100
     circles = cv2.HoughCircles(img, cv2.HOUGH_GRADIENT, 1, minDist, param1=param1, param2=param2, minRadius=minRadius, maxRadius=maxRadius)
-    
     # Store detected hough circles in features
     features["hough_circles"] = circles
     circle_positions = []
@@ -37,7 +36,7 @@ def find_circle_positions_with_hough_transform(img, features) -> bool:
             circle_positions.append((x,y))
 
         features["hough_circle_positions"] = circle_positions
-        print(f"Found {len(circles)} hough circle{'' if len(circles) == 1 else 's'}.")
+        print(f"Found {len(circle_positions)} hough circle{'' if len(circle_positions) == 1 else 's'}.")
         return True
     return False
 
@@ -69,7 +68,7 @@ def find_center_with_contours(img_binary, img_original, output_img, features) ->
     rejected_too_small_cnt = 0
 
     for contour in contours[1:]:
-        cv2.drawContours(output_img, [contour], 0, (255,0,0), 1)
+        cv2.drawContours(output_img, [contour], 0, (0,0,255), 1)
         approx = cv2.approxPolyDP(contour, 0.01 * cv2.arcLength(contour, True), True)
         
         # finding center point of shape
@@ -85,21 +84,21 @@ def find_center_with_contours(img_binary, img_original, output_img, features) ->
         bounding_rect_size = width * height
 
         # Only consider elements with a certain amount of contour sides and a minimum size.
-        if contour_sides >= 5 and contour_sides <= 25 and bounding_rect_size >= 50:
+        if contour_sides >= 5 and contour_sides <= 35 and bounding_rect_size >= 20:
             box = cv2.boxPoints(bounding_rect)
             box = np.int0(box)
             
             color = get_color_for_contour(img_original, contour)
 
             possible_fgc_elements.append(
-                {"contour": contour, "x": x, "y": y, "bounding_rect": bounding_rect, "sides": contour_sides, "color": color}
+                {"contour": contour, "x": x, "y": y, "bounding_rect": bounding_rect, "bounding_rect_size": bounding_rect_size, "sides": contour_sides, "color": color}
             )
         else:
             if contour_sides < 5:
                 rejected_too_few_sides_cnt += 1
             elif contour_sides > 25:
                 rejected_too_many_sides_cnt += 1
-            elif bounding_rect_size < 10:
+            elif bounding_rect_size < 20:
                 rejected_too_small_cnt += 1
 
     print(f"Rejected {rejected_too_few_sides_cnt + rejected_too_many_sides_cnt + rejected_too_small_cnt} of {len(contours[1:])} contours.")
@@ -114,8 +113,12 @@ def find_center_with_contours(img_binary, img_original, output_img, features) ->
     circle_pairs_with_offset_and_closeness_to_hough_circle = []
     for a, contour_dict_1 in enumerate(possible_fgc_elements):
         for b, contour_dict_2 in enumerate(possible_fgc_elements):
-            # Do not consider elements themself
-            if a == b:
+            # Get bounding rect sizes
+            bounding_rect_size_a = contour_dict_1["bounding_rect_size"]
+            bounding_rect_size_b = contour_dict_2["bounding_rect_size"]
+
+            # Do not consider elements themself or combinations, where a > b
+            if a == b or (bounding_rect_size_a + bounding_rect_size_a/4 >= bounding_rect_size_b) or (bounding_rect_size_a/4 >= bounding_rect_size_b):
                 continue
 
             pair_offset = calculate_distance([contour_dict_1["x"], contour_dict_1["y"]],[contour_dict_2["x"], contour_dict_2["y"]])
@@ -130,25 +133,12 @@ def find_center_with_contours(img_binary, img_original, output_img, features) ->
                 if min_closeness_to_hough_circle is None or closeness_to_hough_circle < min_closeness_to_hough_circle:
                     min_closeness_to_hough_circle = closeness_to_hough_circle
 
-            # Get bounding rect sizes
-            (_x_br, _y_br), (width, height), _angle = contour_dict_1["bounding_rect"]
-            bounding_rect_size_a = width * height
-            (_x_br, _y_br), (width, height), _angle = contour_dict_2["bounding_rect"]
-            bounding_rect_size_b = width * height
-
-            if bounding_rect_size_a > bounding_rect_size_b:
-                bounding_rect_size_big = bounding_rect_size_a
-                bounding_rect_size_small = bounding_rect_size_b
-            else:
-                bounding_rect_size_big = bounding_rect_size_b
-                bounding_rect_size_small = bounding_rect_size_a
-
             # Store the found pair
             circle_pairs_with_offset_and_closeness_to_hough_circle.append({
                 "x": int(average_circle_center[0]),
                 "y": int(average_circle_center[1]),
-                "bounding_rect_size_small": bounding_rect_size_small,
-                "bounding_rect_size_big": bounding_rect_size_big,
+                "bounding_rect_size_small": bounding_rect_size_a,
+                "bounding_rect_size_big": bounding_rect_size_a,
                 "total_sides": contour_dict_1["sides"] + contour_dict_2["sides"],
                 "total_color": contour_dict_1["color"] + contour_dict_2["color"],
                 "pair_offset": pair_offset,
@@ -165,26 +155,35 @@ def find_center_with_contours(img_binary, img_original, output_img, features) ->
     for circle_pair in circle_pairs_with_offset_and_closeness_to_hough_circle:
         # relation_big_small_score = abs(circle_pair["bounding_rect_size_small"] - (circle_pair["bounding_rect_size_big"] * 0.75))
         pair_offset_score = circle_pair["pair_offset"]
-        closeness_to_hough_circle_score = circle_pair["closeness_to_hough_circle"] * 3
-        side_score = circle_pair["total_sides"]
-        color_score = circle_pair["total_color"] * 50
-        score = pair_offset_score + closeness_to_hough_circle_score + side_score + color_score
+        size_score = (1 / (circle_pair["bounding_rect_size_small"] + circle_pair["bounding_rect_size_big"])) * 200000
+        closeness_to_hough_circle_score = circle_pair["closeness_to_hough_circle"] * 10
+        side_score = circle_pair["total_sides"] / 10
+        color_score = circle_pair["total_color"] * 20
+        score = pair_offset_score + closeness_to_hough_circle_score + side_score + color_score + size_score
         if best_score is None or score < best_score:
             best_score = score
             center_of_fgc = circle_pair
 
+    #  Print all scores of winning center
+    pair_offset_score = center_of_fgc["pair_offset"]
+    size_score = (1 / (center_of_fgc["bounding_rect_size_small"] + center_of_fgc["bounding_rect_size_big"])) * 200000
+    closeness_to_hough_circle_score = center_of_fgc["closeness_to_hough_circle"] * 10
+    side_score = center_of_fgc["total_sides"] / 10
+    color_score = center_of_fgc["total_color"] * 20
+    score = pair_offset_score + closeness_to_hough_circle_score + side_score + color_score + size_score
+    print("Best pair scores:")
+    print("pair_offset_score:", pair_offset_score)
+    print("size_score:", size_score)
+    print("closeness_to_hough_circle_score", closeness_to_hough_circle_score)
+    print("side_score:", side_score)
+    print("color_score:", color_score)
+    print("total_score:", score)
+
     # If a center is found
     if center_of_fgc is not None:
-        x_a, y_a, w_a, h_a = cv2.boundingRect(center_of_fgc["shape_a"])
-        x_b, y_b, w_b, h_b = cv2.boundingRect(center_of_fgc["shape_b"])
-        if w_a * h_a < w_b * h_b:
-            true_center = center_of_fgc["center_a"]
-            center_shape = center_of_fgc["shape_a"]
-            orientation_shape = center_of_fgc["shape_b"]
-        else:
-            true_center = center_of_fgc["center_b"]
-            center_shape = center_of_fgc["shape_b"]
-            orientation_shape = center_of_fgc["shape_a"]
+        true_center = center_of_fgc["center_a"]
+        center_shape = center_of_fgc["shape_a"]
+        orientation_shape = center_of_fgc["shape_b"]
         
         # Store the center to the features
         features["center_circle"] = center_shape
