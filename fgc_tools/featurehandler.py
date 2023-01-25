@@ -412,7 +412,7 @@ def get_data_from_rings(features):
 
             if not found_contour:
                 # If contour was not found yet, check the closest distance to a contour and decide if it should have been inside
-                if closest_contour is None or total_closest_point_distance > features["orientation_dot"]["distance_to_center"] * 0.2:
+                if closest_contour is None or total_closest_point_distance > features["orientation_dot"]["distance_to_center"] * 0.3:
                     # FGC might be finished
                     data.append(0)
                 else:
