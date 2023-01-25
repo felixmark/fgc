@@ -296,7 +296,7 @@ def divide_elements_into_rings_by_angle_and_distance(features):
     for element in features["possible_fgc_elements"]:
 
         # Increase ring if there is a jump in distance to center
-        if abs(current_distance - element["furthest_distance_to_center"]) >= features["orientation_dot"]["distance_to_center"] * 0.2:
+        if abs(current_distance - element["furthest_distance_to_center"]) >= features["orientation_dot"]["distance_to_center"] * 0.1:   # WAS 0.2
             current_ring += 1
         
         # Append new ring to rings if necessary and append current contour element
@@ -413,7 +413,8 @@ def get_data_from_rings(features):
             if not found_contour:
                 # If contour was not found yet, check the closest distance to a contour and decide if it should have been inside
                 if closest_contour is None or total_closest_point_distance > features["orientation_dot"]["distance_to_center"] * 0.2:
-                    break
+                    # FGC might be finished
+                    data.append(0)
                 else:
                     if pos > 0:
                         if current_contour_angle is not None and current_contour_angle != closest_contour["angle"]:

@@ -41,7 +41,8 @@ def correct_error(bits, error_index):
 
     for index in error_index:
         error_position += index + 1
-    bits[error_position - 1] = 0 if bits[error_position - 1] == 1 else 1
+    if len(bits) - 1 > error_position - 1:
+        bits[error_position - 1] = 0 if bits[error_position - 1] == 1 else 1
     return bits
 
 

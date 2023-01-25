@@ -2,6 +2,7 @@ import numpy as np
 import cv2
 import time
 from bitarray import bitarray
+from .readresult import ReadResult
 from .cvfunctions import *
 from .featurehandler import *
 from .libs.hamming import *
@@ -15,6 +16,8 @@ class FGCReader():
 
     def read_image(image_path=None, image_file=None) -> str:
         np.seterr(invalid='ignore')
+
+        read_result = ReadResult()
 
         # Run operations on img and draw on output_img
         if image_path:
@@ -60,7 +63,7 @@ class FGCReader():
         gray_img = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
         blurred_gray_img = cv2.medianBlur(gray_img, 5)
         heavy_blurred_gray_img = cv2.medianBlur(gray_img, 11)
-        edged = cv2.Canny(blurred_gray_img, 100, 200)
+        edged = cv2.Canny(blurred_gray_img, 55, 200)
         # _, binary_img = cv2.threshold(gray_img, 150, 255, cv2.THRESH_BINARY)
 
         if find_circle_positions_with_hough_transform(heavy_blurred_gray_img, features):
@@ -122,37 +125,47 @@ class FGCReader():
         else:
             print("Could not find FGC at all.")
         
-        read_time = (time.time() - start_time)
-
+        # Store read time and output img
+        read_result.read_time = (time.time() - start_time)
+        read_result.output_img = output_img
+        
         try:
             raw_binary_string = ''.join([str(ch) for ch in features["data"]])
+            read_result.raw_binary_string = raw_binary_string
             raw_binary_bitarray = bitarray(raw_binary_string)
             str_data = raw_binary_bitarray.to01()
-            print("RAW binary:    ", str_data)
             str_data = [int(bit) for bit in str_data]
             all_data_decoded = bitarray(hamming_decode(str_data))
-            print("DECODED binary:", all_data_decoded.to01())
 
-            version = all_data_decoded[:4].to01()
+            # Cenvert binary version to int
+            read_result.version = int(all_data_decoded[:4].to01(), 2)
+
+            # Convert binary text to utf-8
             text = all_data_decoded[4:].to01()
-            print("Version:       ", version)
-            print("Text:          ", text)
-
             output_bytes = []
             # iterate over the binary string in chunks of 8 bits
             for i in range(0, len(text), 8):
                 int_byte = int(text[i:i+8], 2)
                 output_bytes.append(int_byte.to_bytes(1, byteorder='big'))
             print("Bytes Text:    ", output_bytes)
-            utf8_text = b''.join(output_bytes).decode("utf-8")
-            print("UTF-8 Text:    ", utf8_text)
+
+            # Decode text as far as possible
+            utf8_text = None
+            while utf8_text is None and len(output_bytes) > 0:
+                try:
+                    utf8_text = b''.join(output_bytes).decode("utf-8")
+                    print("UTF-8 Text:    ", utf8_text)
+                except:
+                    read_result.has_error = True
+                    output_bytes = output_bytes[:-1]
 
             # Strip all 0s away
             while (utf8_text[-1] == "\0"):
                 utf8_text = utf8_text[:-1]
 
-            return (utf8_text, version, read_time, raw_binary_string, output_img, edged)
+            read_result.text = utf8_text
+            return read_result
         except Exception as ex:
             print(ex)
             print(traceback.format_exc())
-            return ("", [], read_time, "-", output_img, edged)
+            return read_result
