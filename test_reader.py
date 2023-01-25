@@ -1,6 +1,7 @@
 from fgc_tools import FGCReader
 import matplotlib.pyplot as plt
 from fgc_tools.cvfunctions import *
+from fgc_tools.readresult import ReadResult
 
 
 def main():
@@ -27,24 +28,24 @@ def main():
         print("="*60)
         print("Test image: %s" % test_image["img"])
         print("-"*60)
-        str_data, version, read_time, raw_binary_string, output_image, binary_img = FGCReader.read_image(test_image["img"])
-        show_image("Output of: " + test_image["img"], output_image)
+        read_result:ReadResult = FGCReader.read_image(test_image["img"])
+        show_image("Output of: " + test_image["img"], read_result.output_img)
 
         print("-"*60)
-        print("RAW Read:   %s" % raw_binary_string)
-        print("Version:    %s" % str(version))
-        print("Read Time:  %.3fs" % read_time)
-        print("Test data:  %s" % str(list(test_image["content"])))
-        print("Read data:  %s" % str(list(str_data)))
-        print("Result:     ", end="")
-        if str_data == test_image["content"]:
+        print("Bit length:  %i" % len(read_result.raw_binary_string))
+        print("Version:     %s" % str(read_result.version))
+        print("Read Time:   %.3fs" % read_result.read_time)
+        print("Test data:   %s" % str(list(test_image["content"])))
+        print("Read data:   %s" % str(list(read_result.text)))
+        print("Result:      ", end="")
+        if read_result.text == test_image["content"]:
             print("PASSED.")
             passed_cnt += 1
         else:
             print("FAILED.")
             failed_cnt += 1
         
-        total_time += read_time 
+        total_time += read_result.read_time 
     
     print("="*60)
     print("TOTAL PASSED:  %i" % passed_cnt)
