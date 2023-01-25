@@ -155,7 +155,10 @@ class FGCReader():
                 try:
                     utf8_text = b''.join(output_bytes).decode("utf-8")
                     print("UTF-8 Text:    ", utf8_text)
-                except:
+                except Exception as e:
+                    print("Could not decode to utf-8.")
+                    print(e)
+                    print(traceback.format_exc())
                     read_result.has_error = True
                     output_bytes = output_bytes[:-1]
 
