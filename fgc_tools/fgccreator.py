@@ -44,8 +44,12 @@ class FGCCreator:
         str_data = [int(bit) for bit in str_data]
         all_data_decoded = bitarray(hamming_decode(str_data))
 
-        sanity_check = (all_data_decoded == all_data)
-        print(f"Sanity:   {'PASSED' if sanity_check else 'FAILED! PLEASE CHECK INPUT AND HAMMING CODE.'}.")
+        sanity_check_passed = (all_data_decoded == all_data)
+        print(f"Sanity:   {'PASSED' if sanity_check_passed else 'FAILED! PLEASE CHECK INPUT AND HAMMING CODE.'}.")
+        if not sanity_check_passed:
+            print("Decoded:  ", end="")
+            print_bitarray(all_data_decoded)
+
 
         CommonFunctions.print_seperation_line("=")
 
