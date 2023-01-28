@@ -19,6 +19,7 @@ def main():
         { "img": 'static/test_images/9.jpg', "content": "github.com/felixmark/fgc" },
         { "img": 'static/test_images/10.jpg', "content": "Support emojis everywhere 🥹😂" },
         { "img": 'static/test_images/11.jpg', "content": "Baum 🌳" },
+        { "img": 'static/test_images/12.jpg', "content": "FGC" },
     ]
     passed_cnt = 0
     failed_cnt = 0

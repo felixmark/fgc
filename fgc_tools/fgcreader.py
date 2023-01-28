@@ -152,8 +152,10 @@ class FGCReader():
             read_result.raw_binary_string = raw_binary_string
             raw_binary_bitarray = bitarray(raw_binary_string)
             str_data = raw_binary_bitarray.to01()
+            print("RAW:        ", str_data)
             str_data = [int(bit) for bit in str_data]
             all_data_decoded = bitarray(hamming_decode(str_data))
+            print("Decoded:    ", all_data_decoded.to01())
 
             # Cenvert binary version to int
             read_result.version = int(all_data_decoded[:4].to01(), 2)
