@@ -35,11 +35,21 @@ class FGCReader():
         print("Height: ", height)
 
         # Resize images if they are too large
-        max_w_h = 2500
-        if width > height and width > max_w_h:
-            img = image_resize(img, width=max_w_h)
-        elif height > max_w_h:
-            img = image_resize(img, height=max_w_h)
+        if width * height > 1_000_000:
+            max_w_h = 2500
+            resized = True
+            if width >= height and width > max_w_h:
+                img = image_resize(img, width=max_w_h, inter=cv2.INTER_CUBIC)
+            elif height > max_w_h:
+                img = image_resize(img, height=max_w_h, inter=cv2.INTER_CUBIC)
+            else:
+                resized = False
+            if resized:
+                height = img.shape[0]
+                width = img.shape[1]
+                print("Resized the image.")
+                print("Width:  ", width)
+                print("Height: ", height)
 
         # Get image dimensions after resize
         height = img.shape[0]
@@ -63,18 +73,26 @@ class FGCReader():
         gray_img = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
         blurred_gray_img = cv2.medianBlur(gray_img, 5)
         heavy_blurred_gray_img = cv2.medianBlur(gray_img, 11)
-        edged = cv2.Canny(blurred_gray_img, 55, 200)
+        edged = cv2.Canny(blurred_gray_img, 150, 220)
         # _, binary_img = cv2.threshold(gray_img, 150, 255, cv2.THRESH_BINARY)
+        print("Time conversions:", (time.time() - start_time))
 
         if find_circle_positions_with_hough_transform(heavy_blurred_gray_img, features):
+            print("Time finding circles:", (time.time() - start_time))
             if find_center_with_contours(edged, img, output_img, features):
+                print("Time finding center:", (time.time() - start_time))
 
                 # Now that we've found the center circle of the fgc, do some more examination of the data and contours
                 find_orientation_dot(features)
+                print("Time finding orientation dot:", (time.time() - start_time))
                 sanitize_data(features)
+                print("Time sanitizing data:", (time.time() - start_time))
                 get_all_angles(features)
+                print("Time getting angles:", (time.time() - start_time))
                 divide_elements_into_rings_by_angle_and_distance(features)
+                print("Time dividing elements into rings:", (time.time() - start_time))
                 get_data_from_rings(features)
+                print("Time getting data:", (time.time() - start_time))
 
                 # Print some info on the output image
                 cv2.circle(output_img, (features["center_coordinates"][0], features["center_coordinates"][1]), 4, (255,255,255), 2)

@@ -53,12 +53,12 @@ def get_color_for_contour(img, contour):
     col_mean = cv2.mean(img,mask)
     return (col_mean[0] + col_mean[1] + col_mean[2]) // 3
 
-def find_center_with_contours(img_binary, img_original, output_img, features) -> bool:
+def find_center_with_contours(img_edged, img_original, output_img, features) -> bool:
     """Funky function to determine the center of the fgc.
     It tries to find a point in the image, where two overlapping contours are as close as possible to a hough transform found circle."""
 
     contours, _ = cv2.findContours(
-        img_binary, cv2.RETR_TREE, cv2.CHAIN_APPROX_SIMPLE
+        img_edged, cv2.RETR_TREE, cv2.CHAIN_APPROX_SIMPLE
     )
 
     # Store all possible elements of the fgc in this list
@@ -73,6 +73,7 @@ def find_center_with_contours(img_binary, img_original, output_img, features) ->
         
         # finding center point of shape
         M = cv2.moments(contour)
+        x, y = 0, 0
         if M['m00'] != 0.0:
             x = int(M['m10']/M['m00'])
             y = int(M['m01']/M['m00'])
@@ -84,7 +85,7 @@ def find_center_with_contours(img_binary, img_original, output_img, features) ->
         bounding_rect_size = width * height
 
         # Only consider elements with a certain amount of contour sides and a minimum size.
-        if contour_sides >= 5 and contour_sides <= 35 and bounding_rect_size >= 20:
+        if contour_sides >= 5 and contour_sides <= 35 and bounding_rect_size >= 20 and x and y:
             box = cv2.boxPoints(bounding_rect)
             box = np.int0(box)
             
@@ -154,11 +155,11 @@ def find_center_with_contours(img_binary, img_original, output_img, features) ->
     best_score = None
     for circle_pair in circle_pairs_with_offset_and_closeness_to_hough_circle:
         # relation_big_small_score = abs(circle_pair["bounding_rect_size_small"] - (circle_pair["bounding_rect_size_big"] * 0.75))
-        pair_offset_score = circle_pair["pair_offset"]
+        pair_offset_score = circle_pair["pair_offset"] * 10
         size_score = (1 / (circle_pair["bounding_rect_size_small"] + circle_pair["bounding_rect_size_big"])) * 200000
         closeness_to_hough_circle_score = circle_pair["closeness_to_hough_circle"] * 10
         side_score = circle_pair["total_sides"] / 10
-        color_score = circle_pair["total_color"] * 20
+        color_score = circle_pair["total_color"] * 10
         score = pair_offset_score + closeness_to_hough_circle_score + side_score + color_score + size_score
         if best_score is None or score < best_score:
             best_score = score
@@ -386,6 +387,7 @@ def get_data_from_rings(features):
                 if is_point_in_contour == 1:
                     # If target position lies within this contour, this is the one we are looking for
                     if pos > 0:
+                        # Pos (bit in ring) has to be greater than 0 because first bit is always 0
                         if current_contour_angle is not None and current_contour_angle != element["angle"]:
                             currently_zero = not currently_zero
                         if currently_zero:
@@ -398,7 +400,10 @@ def get_data_from_rings(features):
                     found_contour = True
                     current_contour_angle = element["angle"]
                     break
-                else:
+            
+            # Seperate from previous loop to prevent doing this time consuming calculation all the time
+            if not found_contour:
+                for element in ring:
                     # If target position lies outside contour, keep track of the distance to this contour
                     closest_point_distance_in_contour = None
                     for point in element["contour"]:
