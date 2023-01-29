@@ -73,7 +73,7 @@ class FGCReader():
         gray_img = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
         blurred_gray_img = cv2.medianBlur(gray_img, 5)
         heavy_blurred_gray_img = cv2.medianBlur(gray_img, 11)
-        edged = cv2.Canny(blurred_gray_img, 150, 220)
+        edged = cv2.Canny(blurred_gray_img, 55, 200)
         # _, binary_img = cv2.threshold(gray_img, 150, 255, cv2.THRESH_BINARY)
         print("Time conversions:", (time.time() - start_time))
 
@@ -183,7 +183,7 @@ class FGCReader():
                     output_bytes = output_bytes[:-1]
 
             # Strip all 0s away
-            while (utf8_text[-1] == "\0"):
+            while (utf8_text[-1] == "\0" or utf8_text[-1] == "\1"):
                 utf8_text = utf8_text[:-1]
 
             read_result.text = utf8_text
